@@ -10,13 +10,11 @@ A utility for finding elements in the DOM as soon as they appear there.
 
 A utility for working with asynchronous http requests.
 
-### Constructor
-
 ``` javascript
-recorder = new WebAudioRecorder(sourceNode, configs)
+x.ajax.fetch( request );
 ```
 
-Create an audio recorder object.
+Start a fetch request.
 
 * Parameters
     * `sourceNode`: source input (AudioNode object)
