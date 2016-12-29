@@ -1,5 +1,3 @@
-// 1.0.0
-
 ;( function () {
 
 	function X ( window ) {
@@ -182,7 +180,7 @@
 			
 			},
 			
-			send_tab_message_rq_to_rs: function ( req, conv ) {
+			send_tab_message_rq_to_rs: function ( req ) {
 
 				if ( req.all_tabs_flag ) {
 
@@ -351,7 +349,7 @@
 
 		x.ajax = {
 
-			fetch: function ( rq, conv ) {
+			fetch: function ( rq ) {
 
 				var headers = new Headers( rq.headers || {} );
 
@@ -369,7 +367,7 @@
 						return r.text()
 						.then( function ( text ) {
 
-							return conv( "text", "json", text );
+							return x.util.text_to_json( text );
 
 						});
 
@@ -394,7 +392,7 @@
 						return r.text()
 						.then( function ( text ) {
 
-							return conv( "text", "doc", text );
+							return x.util.text_to_doc( text );
 
 						});
 
@@ -462,7 +460,7 @@
 						return r.text()
 						.then( function ( text ) {
 
-							return conv( "text", "json", text );
+							return x.util.text_to_json( text );
 
 						});
 
@@ -477,13 +475,13 @@
 
 			},
 
-			http_rq_to_rs: function ( request, conv ) {
+			http_rq_to_rs: function ( request ) {
 
 				var body;
 
 				if ( request.method === "POST" && request.content_type === "application/x-www-form-urlencoded" ) {
 
-					body = conv( "obj", "form_data", request.body );
+					body = x.ajax.obj_to_form_data( request.body );
 
 				} else if ( request.method === "POST" && request.content_type === "application/json" ) {
 
@@ -545,7 +543,7 @@
 
 			},
 
-			xhr_rq_to_rs: function ( rq, conv ) {
+			xhr_rq_to_rs: function ( rq ) {
 
 				return new Promise( function ( resolve ) {
 
