@@ -3,7 +3,7 @@
 
 		return {
 
-			fetch: function ( rq ) {
+			fetch_rq_to_rs: function ( rq ) {
 
 				var headers = new Headers( rq.headers || {} );
 

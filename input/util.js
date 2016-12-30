@@ -1,6 +1,8 @@
 
 	window.x.util = ( function () {
 
+		var parser = new DOMParser();
+
 		return {
 
 			text_to_json: function ( text ) {
@@ -19,13 +21,13 @@
 
 			text_to_doc: function ( text ) {
 
-				return m.parser.parseFromString( text, "text/html" );
+				return parser.parseFromString( text, "text/html" );
 
 			},
 
 			html_to_doc: function ( html ) {
 
-				return m.parser.parseFromString( html, "text/html" );
+				return parser.parseFromString( html, "text/html" );
 
 			},
 
