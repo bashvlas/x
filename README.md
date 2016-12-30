@@ -18,5 +18,11 @@ A utility for working with asynchronous http requests.
 x.ajax.fetch_rq_to_rs( request );
 x.ajax.http_rq_to_rs( request );
 ```
+## x.hub
+A utility for passing messages between content scripts, background pages, etc.
+## x.query
+A utility for finding items in a dataset.
+## x.util
+A general-purpose utility
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
