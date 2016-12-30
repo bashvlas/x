@@ -1,17 +1,21 @@
-;( function () {
+( function () {
 
-	function X ( window ) {
+	var uglify = require( "uglify-js" );
+	var fs = require( "fs" );
 
-		var x = {};
+	var ugly = uglify.minify([
 
-		return x;
+		"input/main.js",
 
-	};
+		"input/util.js",
+		"input/hub.js",
+		"input/ajax.js",
+		"input/query.js",
+		"input/storage.js",
+		"input/detector.js",
 
-	( function ( window ) {
+	]);
 
-		window.x = new X( window );
-
-	} ( window ) );
+	fs.writeFile( "output/x.min.js", ugly.code );
 
 } () );

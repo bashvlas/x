@@ -1,8 +1,6 @@
 
 	describe( "x", function () {
 
-		var x = new X( window, chrome, chrome.storage );
-
 		describe( "util", function () {
 
 			describe( "x.util.text_to_json", function () {
@@ -21,8 +19,6 @@
 		});
 
 		describe( "query", function () {
-
-			var x = new X( window, chrome, chrome.storage );
 
 			describe( "x.query.query", function () {
 
