@@ -1,4 +1,4 @@
-# x
+# X
 A JavaScript library for chrome extension development
 ## x.storage
 A utility for working with local storage.
