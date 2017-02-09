@@ -113,9 +113,11 @@
 
 			},
 
-			detect: function ( selector, callback ) {
+			detect: function ( selector, root_element, callback ) {
 
-				var element_arr = window.document.querySelectorAll( selector );
+				root_element = root_element || document;
+
+				var element_arr = root_element.querySelectorAll( selector );
 
 				for ( var i = 0; i < element_arr.length; i++ ) {
 
@@ -130,7 +132,7 @@
 
 				var observer = new MutationObserver( function ( records ) {
 				
-					var element_arr = window.document.querySelectorAll( selector );
+					var element_arr = root_element.querySelectorAll( selector );
 
 					if ( element_arr ) {
 
@@ -149,7 +151,7 @@
 
 				});
 
-				observer.observe( window.document, { childList: true, subtree: true } );
+				observer.observe( root_element, { childList: true, subtree: true } );
 
 			},
 

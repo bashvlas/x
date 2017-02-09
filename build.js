@@ -9,6 +9,7 @@
 
 		"input/util.js",
 		"input/hub.js",
+		"input/test.js",
 		"input/ajax.js",
 		"input/query.js",
 		"input/storage.js",
@@ -22,6 +23,7 @@
 
 		"input/util.js",
 		"input/hub.js",
+		"input/test.js",
 		"input/ajax.js",
 		"input/query.js",
 		"input/storage.js",

@@ -44,6 +44,20 @@ window.x.util = function() {
                 }
             }
         },
+        is_defined: function(item) {
+            if (typeof item === "undefined") {
+                return false;
+            } else {
+                return true;
+            }
+        },
+        is_undefined: function(item) {
+            if (typeof item === "undefined") {
+                return true;
+            } else {
+                return false;
+            }
+        },
         normalize_links: function(element) {
             var link_arr = element.querySelectorAll("a");
             for (var i = link_arr.length; i--; ) {
@@ -155,9 +169,25 @@ window.x.hub = function() {
     };
 }();
 
+window.x.test = function() {
+    return {
+        test: function(fn, input_url, output_url) {
+            return Promise.all([ x.ajax.fetch({
+                method: "get_doc",
+                url: input_url
+            }), x.ajax.fetch({
+                method: "get_json",
+                url: output_url
+            }) ]).then(function(arr) {
+                console.log(arr);
+            });
+        }
+    };
+}();
+
 window.x.ajax = function() {
     return {
-        fetch_rq_to_rs: function(rq) {
+        fetch: function(rq) {
             var headers = new Headers(rq.headers || {});
             if (rq.method === "get_json") {
                 return window.fetch(rq.url, {
@@ -219,7 +249,7 @@ window.x.ajax = function() {
                 });
             }
         },
-        http_rq_to_rs: function(request) {
+        http: function(request) {
             var body;
             if (request.method === "POST" && request.content_type === "application/x-www-form-urlencoded") {
                 body = x.ajax.obj_to_form_data(request.body);
@@ -264,7 +294,7 @@ window.x.ajax = function() {
                 return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
             }).join("&");
         },
-        xhr_rq_to_rs: function(rq) {
+        xhr: function(rq) {
             return new Promise(function(resolve) {
                 function readystatechange_listener() {
                     if (this.readyState === 4) {
@@ -513,8 +543,9 @@ window.x.detector = function() {
                 }
             });
         },
-        detect: function(selector, callback) {
-            var element_arr = window.document.querySelectorAll(selector);
+        detect: function(selector, root_element, callback) {
+            root_element = root_element || document;
+            var element_arr = root_element.querySelectorAll(selector);
             for (var i = 0; i < element_arr.length; i++) {
                 if (element_arr[0].dataset.detected !== "1") {
                     element_arr[0].dataset.detected = "1";
@@ -522,7 +553,7 @@ window.x.detector = function() {
                 }
             }
             var observer = new MutationObserver(function(records) {
-                var element_arr = window.document.querySelectorAll(selector);
+                var element_arr = root_element.querySelectorAll(selector);
                 if (element_arr) {
                     for (var i = 0; i < element_arr.length; i++) {
                         if (element_arr[i].dataset.detected !== "1") {
@@ -532,7 +563,7 @@ window.x.detector = function() {
                     }
                 }
             });
-            observer.observe(window.document, {
+            observer.observe(root_element, {
                 childList: true,
                 subtree: true
             });

@@ -18,7 +18,7 @@
 				window.chrome.runtime.sendMessage( rq );
 			
 			},
-			
+
 			send_tab_message_rq_to_rs: function ( req ) {
 
 				if ( req.all_tabs_flag ) {

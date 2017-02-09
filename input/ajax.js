@@ -3,7 +3,7 @@
 
 		return {
 
-			fetch_rq_to_rs: function ( rq ) {
+			fetch: function ( rq ) {
 
 				var headers = new Headers( rq.headers || {} );
 
@@ -129,7 +129,7 @@
 
 			},
 
-			http_rq_to_rs: function ( request ) {
+			http: function ( request ) {
 
 				var body;
 
@@ -197,7 +197,7 @@
 
 			},
 
-			xhr_rq_to_rs: function ( rq ) {
+			xhr: function ( rq ) {
 
 				return new Promise( function ( resolve ) {
 

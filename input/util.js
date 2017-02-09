@@ -80,6 +80,34 @@
 
 			},
 
+			is_defined: function ( item ) {
+
+				if ( typeof item === "undefined" ) {
+
+					return false;
+
+				} else {
+
+					return true;
+
+				}
+
+			},
+
+			is_undefined: function ( item ) {
+
+				if ( typeof item === "undefined" ) {
+
+					return true;
+
+				} else {
+
+					return false;
+
+				}
+
+			},
+
 			normalize_links: function ( element ) {
 
 				var link_arr = element.querySelectorAll( "a" );
