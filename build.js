@@ -3,6 +3,12 @@
 	var uglify = require( "uglify-js" );
 	var fs = require( "fs" );
 
+	var metadata = JSON.parse( fs.readFileSync( "metadata.json", "utf8" ) );
+	metadata.build_id += 1;
+	fs.writeFileSync( "metadata.json", JSON.stringify( metadata, null, "\t" ) );
+
+	var metadata_prefix = "/*" + JSON.stringify( metadata ) + "*/\n"
+
 	var ugly = uglify.minify([
 
 		"input/main.js",
@@ -37,7 +43,7 @@
 
 	});
 
-	fs.writeFile( "output/x.js", beautiful.code );
-	fs.writeFile( "output/x.min.js", ugly.code );
+	fs.writeFile( "output/x.js", metadata_prefix + beautiful.code );
+	fs.writeFile( "output/x.min.js", metadata_prefix + ugly.code );
 
 } () );

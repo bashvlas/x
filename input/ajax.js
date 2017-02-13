@@ -123,7 +123,35 @@
 
 						return null;
 
-					});	
+					});
+
+				} else if ( rq.method === "post" ) {
+
+					headers.append( "Content-Type", "application/x-www-form-urlencoded" );
+
+					return window.fetch( rq.url, {
+
+						method: "POST",
+						credentials: "include",
+						body: x.ajax.obj_to_form_data( rq.body ),
+						headers: headers,
+
+					})
+					.then( function ( r ) {
+
+						return r.text()
+						.then( function ( text ) {
+
+							return x.util.text_to_json( text );
+
+						});
+
+					})
+					.catch( function ( response ) {
+
+						return null;
+
+					});
 
 				};
 
@@ -184,16 +212,6 @@
 					};
 
 				});
-
-			},
-
-			obj_to_form_data: function ( obj ) {
-
-				return Object.keys( obj ).map( function ( name ) {
-
-					return encodeURIComponent( name ) + "=" + encodeURIComponent( obj[ name ] );
-
-				}).join( "&" );
 
 			},
 
@@ -333,6 +351,16 @@
 						xhr.send( rq_body );
 
 				});
+
+			},
+
+			obj_to_form_data: function ( obj ) {
+
+				return Object.keys( obj ).map( function ( name ) {
+
+					return encodeURIComponent( name ) + "=" + encodeURIComponent( obj[ name ] );
+
+				}).join( "&" );
 
 			},
 

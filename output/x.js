@@ -1,3 +1,4 @@
+/*{"current_version":"1.0.0","build_id":12,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -285,6 +286,20 @@ window.x.ajax = function() {
                 }).catch(function(response) {
                     return null;
                 });
+            } else if (rq.method === "post") {
+                headers.append("Content-Type", "application/x-www-form-urlencoded");
+                return window.fetch(rq.url, {
+                    method: "POST",
+                    credentials: "include",
+                    body: x.ajax.obj_to_form_data(rq.body),
+                    headers: headers
+                }).then(function(r) {
+                    return r.text().then(function(text) {
+                        return x.util.text_to_json(text);
+                    });
+                }).catch(function(response) {
+                    return null;
+                });
             }
         },
         http: function(request) {
@@ -326,11 +341,6 @@ window.x.ajax = function() {
                     }
                 };
             });
-        },
-        obj_to_form_data: function(obj) {
-            return Object.keys(obj).map(function(name) {
-                return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
-            }).join("&");
         },
         xhr: function(rq) {
             return new Promise(function(resolve) {
@@ -396,6 +406,11 @@ window.x.ajax = function() {
                 }
                 xhr.send(rq_body);
             });
+        },
+        obj_to_form_data: function(obj) {
+            return Object.keys(obj).map(function(name) {
+                return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
+            }).join("&");
         }
     };
 }();
