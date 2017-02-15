@@ -1,4 +1,4 @@
-/*{"current_version":"1.0.0","build_id":12,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.0.0","build_id":13,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -6,6 +6,9 @@
 window.x.util = function() {
     var parser = new DOMParser();
     return {
+        list_to_arr: function(list) {
+            return Array.prototype.slice.call(list);
+        },
         text_to_json: function(text) {
             try {
                 return JSON.parse(text);

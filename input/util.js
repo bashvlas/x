@@ -5,6 +5,12 @@
 
 		return {
 
+			list_to_arr: function ( list ) {
+
+				return Array.prototype.slice.call( list );
+
+			},
+
 			text_to_json: function ( text ) {
 
 				try {
