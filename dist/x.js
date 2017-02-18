@@ -1,4 +1,4 @@
-/*{"current_version":"1.0.0","build_id":13,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.0.0","build_id":15,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -151,9 +151,31 @@ window.x.util = function() {
 }();
 
 window.x.hub = function() {
+    var events = {};
+    function add_one(name, observer) {
+        if (typeof events[name] === "undefined") {
+            events[name] = [];
+        }
+        events[name].push(observer);
+    }
+    function remove(name) {
+        events[name] = undefined;
+    }
     return {
-        send: function() {},
-        listen: function() {},
+        trigger: function(name, data) {
+            if (typeof events[name] !== "undefined") {
+                data = data ? data : {};
+                data.event_name = name;
+                events[name].forEach(function(observer) {
+                    observer(data);
+                });
+            }
+        },
+        listen: function(observers) {
+            Object.keys(observers).forEach(function(name) {
+                add_one(name, observers[name]);
+            });
+        },
         send_runtime_message_rq_to_rs: function(rq) {
             window.chrome.runtime.sendMessage(rq);
         },

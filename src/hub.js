@@ -1,18 +1,52 @@
 
 	window.x.hub = ( function () {
+		
+		var events = {};
 
-		var hub = {};
+		function add_one ( name, observer ) {
+		
+			if ( typeof events[ name ] === 'undefined' ) {
+			
+				events[ name ] = [];
+
+			}
+			
+			events[ name ].push( observer );
+		
+		};
+
+		function remove ( name ) {
+
+			events[ name ] = undefined;
+
+		};
 
 		return {
 
-			trigger: function ( event_name, listener ) {
+			trigger: function ( name, data ) {
+				
+				if ( typeof events[ name ] !== 'undefined' ) {
 
+					data = data ? data : {};
+					data.event_name = name;
+					
+					events[ name ].forEach( function ( observer ) {
+					
+						observer( data );
+					
+					});
+				
+				};
 
 			},
 
-			listen: function ( listener_hash ) {
+			listen: function ( observers ) {
+		
+				Object.keys( observers ).forEach( function ( name ) {
 
+					add_one( name, observers[ name ] );
 
+				});
 
 			},
 
