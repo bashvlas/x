@@ -1,14 +1,17 @@
 
 	window.x.hub = ( function () {
 
+		var hub = {};
+
 		return {
 
-			send: function () {
+			trigger: function ( event_name, listener ) {
 
 
 			},
 
-			listen: function () {
+			listen: function ( listener_hash ) {
+
 
 
 			},
