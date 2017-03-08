@@ -82,7 +82,7 @@
 
 			wait_for: function ( selector, root ) {
 
-				return new Promise( ( resolve ) => {
+				return new Promise( function ( resolve ) {
 
 					var resolved = false;
 					var element = $( selector, root ).get( 0 );

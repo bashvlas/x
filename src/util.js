@@ -277,7 +277,7 @@
 
 			wait: function ( time ) {
 
-				return new Promise( ( resolve ) => {
+				return new Promise( function ( resolve ) {
 
 					setTimeout( resolve, time );
 

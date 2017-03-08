@@ -1,4 +1,4 @@
-/*{"current_version":"1.0.0","build_id":15,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.0.0","build_id":20,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -146,6 +146,11 @@ window.x.util = function() {
                 }
             }
             return obj;
+        },
+        wait: function(time) {
+            return new Promise(function(resolve) {
+                setTimeout(resolve, time);
+            });
         }
     };
 }();
@@ -600,6 +605,30 @@ window.x.detector = function() {
                     }
                 });
             }
+        },
+        wait_for: function(selector, root) {
+            return new Promise(function(resolve) {
+                var resolved = false;
+                var element = $(selector, root).get(0);
+                if (element) {
+                    resolve(element);
+                } else {
+                    var observer = new MutationObserver(function() {
+                        if (resolved === false) {
+                            element = $(selector, root).get(0);
+                            if (element) {
+                                resolve(element);
+                                observer.disconnect(root);
+                                resolved = true;
+                            }
+                        }
+                    });
+                    observer.observe(root, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            });
         },
         selector_to_element: function(selector) {
             return new Promise(function(resolve) {
