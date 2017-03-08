@@ -80,6 +80,50 @@
 
 			},
 
+			wait_for ( selector, root ) {
+
+				return new Promise( ( resolve ) => {
+
+					var resolved = false;
+					var element = $( selector, root ).get( 0 );
+
+					if ( element ) {
+
+						resolve( element );
+
+					} else {
+
+						var observer = new MutationObserver( function () {
+
+							if ( resolved === false ) {
+
+								element = $( selector, root ).get( 0 );
+
+								if ( element ) {
+
+									resolve( element );
+									observer.disconnect( root );
+									resolved = true;
+
+								};
+
+							};
+
+						});
+
+						observer.observe( root, {
+
+							childList: true,
+							subtree: true,
+
+						});
+
+					};
+
+				});
+
+			}
+
 			selector_to_element: function ( selector ) {
 
 				return new Promise( function ( resolve ) {
