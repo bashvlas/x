@@ -275,7 +275,7 @@
 
 			},
 
-			wait ( time ) {
+			wait: function ( time ) {
 
 				return new Promise( ( resolve ) => {
 
@@ -283,7 +283,7 @@
 
 				});
 
-			}
+			},
 
 		};
 

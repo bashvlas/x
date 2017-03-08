@@ -80,7 +80,7 @@
 
 			},
 
-			wait_for ( selector, root ) {
+			wait_for: function ( selector, root ) {
 
 				return new Promise( ( resolve ) => {
 
@@ -122,7 +122,7 @@
 
 				});
 
-			}
+			},
 
 			selector_to_element: function ( selector ) {
 
