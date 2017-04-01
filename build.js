@@ -19,7 +19,7 @@
 		"src/ajax.js",
 		"src/query.js",
 		"src/storage.js",
-		"src/detector.js",
+		"src/detect.js",
 
 	]);
 
@@ -33,7 +33,7 @@
 		"src/ajax.js",
 		"src/query.js",
 		"src/storage.js",
-		"src/detector.js",
+		"src/detect.js",
 
 	], {
 
