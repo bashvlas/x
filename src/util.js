@@ -4,7 +4,27 @@
 		var parser = new DOMParser();
 
 		return {
+			
+			open_new_tab: function ( url ) {
 
+				chrome.tabs.create({ active: true, url: url });
+
+			},
+
+			send_to_all_tabs: function ( message ) {
+
+				chrome.tabs.query( {}, function ( tab_arr ) {
+
+					tab_arr.forEach( function ( tab ) {
+
+						chrome.tabs.sendMessage( tab.id, message );
+
+					});
+
+				});
+
+			},
+			
 			list_to_arr: function ( list ) {
 
 				return Array.prototype.slice.call( list );

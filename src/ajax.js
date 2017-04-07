@@ -1,6 +1,27 @@
 
 	window.x.ajax = ( function () {
 
+		function open_window_with_post_data ( url, data ) {
+
+			var form = document.createElement( "form" );
+			var input = document.createElement( "input" );
+
+			form.action = url;
+			form.method = "POST";
+			form.target = "_blank";
+
+			input.name = 'data';
+			input.value = JSON.stringify( data );
+
+			form.appendChild( input );
+			form.style.display = "none";
+
+			document.body.appendChild( form );
+			
+			form.submit();
+
+		};
+		
 		function obj_to_form_data ( obj ) {
 
 			return Object.keys( obj ).map( function ( name ) {
@@ -11,7 +32,7 @@
 
 		};
 
-		function ajax () {
+		function ajax ( rq ) {
 
 			var headers = new Headers( rq.headers || {} );
 

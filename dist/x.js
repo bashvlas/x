@@ -1,4 +1,4 @@
-/*{"current_version":"1.0.0","build_id":20,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":24,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -6,6 +6,19 @@
 window.x.util = function() {
     var parser = new DOMParser();
     return {
+        open_new_tab: function(url) {
+            chrome.tabs.create({
+                active: true,
+                url: url
+            });
+        },
+        send_to_all_tabs: function(message) {
+            chrome.tabs.query({}, function(tab_arr) {
+                tab_arr.forEach(function(tab) {
+                    chrome.tabs.sendMessage(tab.id, message);
+                });
+            });
+        },
         list_to_arr: function(list) {
             return Array.prototype.slice.call(list);
         },
@@ -255,194 +268,101 @@ window.x.test = function() {
 }();
 
 window.x.ajax = function() {
-    return {
-        fetch: function(rq) {
-            var headers = new Headers(rq.headers || {});
-            if (rq.method === "get_json") {
-                return window.fetch(rq.url, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: headers
-                }).then(function(r) {
-                    return r.text().then(function(text) {
-                        return x.util.text_to_json(text);
-                    });
-                }).catch(function(response) {
-                    return null;
-                });
-            } else if (rq.method === "get_doc") {
-                return window.fetch(rq.url, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: headers
-                }).then(function(r) {
-                    return r.text().then(function(text) {
-                        return x.util.text_to_doc(text);
-                    });
-                }).catch(function(response) {
-                    return null;
-                });
-            } else if (rq.method === "get_blob") {
-                return window.fetch(rq.url, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: headers
-                }).then(function(r) {
-                    return r.blob();
-                }).catch(function(response) {
-                    return null;
-                });
-            } else if (rq.method === "get_text") {
-                return window.fetch(rq.url, {
-                    method: "GET",
-                    credentials: "include",
-                    headers: headers
-                }).then(function(r) {
-                    return r.text();
-                }).catch(function(response) {
-                    return null;
-                });
-            } else if (rq.method === "post_json_get_json") {
-                headers.append("Content-Type", "application/json");
-                return window.fetch(rq.url, {
-                    method: "POST",
-                    credentials: "include",
-                    body: JSON.stringify(rq.body),
-                    headers: headers
-                }).then(function(r) {
-                    return r.text().then(function(text) {
-                        return x.util.text_to_json(text);
-                    });
-                }).catch(function(response) {
-                    return null;
-                });
-            } else if (rq.method === "post") {
-                headers.append("Content-Type", "application/x-www-form-urlencoded");
-                return window.fetch(rq.url, {
-                    method: "POST",
-                    credentials: "include",
-                    body: x.ajax.obj_to_form_data(rq.body),
-                    headers: headers
-                }).then(function(r) {
-                    return r.text().then(function(text) {
-                        return x.util.text_to_json(text);
-                    });
-                }).catch(function(response) {
-                    return null;
-                });
-            }
-        },
-        http: function(request) {
-            var body;
-            if (request.method === "POST" && request.content_type === "application/x-www-form-urlencoded") {
-                body = x.ajax.obj_to_form_data(request.body);
-            } else if (request.method === "POST" && request.content_type === "application/json") {
-                body = JSON.stringify(request.body);
-            }
-            return window.fetch(request.url, {
-                method: request.method,
+    function open_window_with_post_data(url, data) {
+        var form = document.createElement("form");
+        var input = document.createElement("input");
+        form.action = url;
+        form.method = "POST";
+        form.target = "_blank";
+        input.name = "data";
+        input.value = JSON.stringify(data);
+        form.appendChild(input);
+        form.style.display = "none";
+        document.body.appendChild(form);
+        form.submit();
+    }
+    function obj_to_form_data(obj) {
+        return Object.keys(obj).map(function(name) {
+            return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
+        }).join("&");
+    }
+    function ajax(rq) {
+        var headers = new Headers(rq.headers || {});
+        if (rq.method === "get_json") {
+            return window.fetch(rq.url, {
+                method: "GET",
                 credentials: "include",
-                headers: new Headers({
-                    "Content-Type": request.content_type,
-                    Accept: request.accept
-                }),
-                body: body
+                headers: headers
             }).then(function(r) {
                 return r.text().then(function(text) {
-                    return {
-                        head: {
-                            error: false,
-                            code: 0,
-                            http_req: request,
-                            status: r.status,
-                            headers: r.headers
-                        },
-                        body: {
-                            text: text
-                        }
-                    };
+                    return x.util.text_to_json(text);
                 });
             }).catch(function(response) {
-                return {
-                    head: {
-                        error: true,
-                        code: 1,
-                        http_req: request
-                    }
-                };
+                return null;
             });
-        },
-        xhr: function(rq) {
-            return new Promise(function(resolve) {
-                function readystatechange_listener() {
-                    if (this.readyState === 4) {
-                        if (this.status === 200) {
-                            resolve({
-                                error: false,
-                                response: this.response
-                            });
-                        } else {
-                            resolve({
-                                error: true,
-                                response: this.response
-                            });
-                        }
-                    }
-                }
-                function timeout_listener() {}
-                function load_listener() {
-                    if (this.status === 200) {
-                        resolve({
-                            error: false,
-                            response: this.response
-                        });
-                    } else {
-                        resolve({
-                            error: true
-                        });
-                    }
-                }
-                function error_listener() {
-                    resolve({
-                        error: true
-                    });
-                }
-                var xhr = new XMLHttpRequest();
-                xhr.open(rq.method, rq.url, true);
-                if (rq.timeout) {
-                    xhr.timeout = rq.timeout;
-                }
-                xhr.responseType = rq.response_type || "text";
-                if (rq.headers) {
-                    Object.keys(rq.headers).forEach(function(key) {
-                        xhr.setRequestHeader(key, rq.headers[key]);
-                    });
-                }
-                if (rq.rq_body_type === "json") {
-                    xhr.setRequestHeader("Content-Type", "application/json");
-                }
-                xhr.addEventListener("load", load_listener);
-                xhr.addEventListener("error", error_listener);
-                xhr.addEventListener("timeout", timeout_listener);
-                if (rq.rq_body_type === "json") {
-                    var rq_body = JSON.stringify(rq.rq_body);
-                } else if (rq.rq_body_type === "form_data") {
-                    var rq_body = new FormData();
-                    Object.keys(rq.rq_body).forEach(function(key) {
-                        rq_body.append(key, rq.rq_body[key]);
-                    });
-                } else {
-                    var rq_body = null;
-                }
-                xhr.send(rq_body);
+        } else if (rq.method === "get_doc") {
+            return window.fetch(rq.url, {
+                method: "GET",
+                credentials: "include",
+                headers: headers
+            }).then(function(r) {
+                return r.text().then(function(text) {
+                    return x.util.text_to_doc(text);
+                });
+            }).catch(function(response) {
+                return null;
             });
-        },
-        obj_to_form_data: function(obj) {
-            return Object.keys(obj).map(function(name) {
-                return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
-            }).join("&");
+        } else if (rq.method === "get_blob") {
+            return window.fetch(rq.url, {
+                method: "GET",
+                credentials: "include",
+                headers: headers
+            }).then(function(r) {
+                return r.blob();
+            }).catch(function(response) {
+                return null;
+            });
+        } else if (rq.method === "get_text") {
+            return window.fetch(rq.url, {
+                method: "GET",
+                credentials: "include",
+                headers: headers
+            }).then(function(r) {
+                return r.text();
+            }).catch(function(response) {
+                return null;
+            });
+        } else if (rq.method === "post_json_get_json") {
+            headers.append("Content-Type", "application/json");
+            return window.fetch(rq.url, {
+                method: "POST",
+                credentials: "include",
+                body: JSON.stringify(rq.body),
+                headers: headers
+            }).then(function(r) {
+                return r.text().then(function(text) {
+                    return x.util.text_to_json(text);
+                });
+            }).catch(function(response) {
+                return null;
+            });
+        } else if (rq.method === "post") {
+            headers.append("Content-Type", "application/x-www-form-urlencoded");
+            return window.fetch(rq.url, {
+                method: "POST",
+                credentials: "include",
+                body: obj_to_form_data(rq.body),
+                headers: headers
+            }).then(function(r) {
+                return r.text().then(function(text) {
+                    return x.util.text_to_json(text);
+                });
+            }).catch(function(response) {
+                return null;
+            });
         }
-    };
+    }
+    return ajax;
 }();
 
 window.x.query = function() {
@@ -557,100 +477,13 @@ window.x.storage = function() {
     };
 }();
 
-window.x.detector = function() {
-    return {
-        detect: function(options) {
-            if (options.type = "default") {
-                var selector = options.selector;
-                var callback = options.callback;
-                var element_arr = window.document.querySelectorAll(selector);
-                for (var i = 0; i < element_arr.length; i++) {
-                    if (element_arr[0].dataset.detected !== "1") {
-                        element_arr[0].dataset.detected = "1";
-                        callback(element_arr[0]);
-                    }
-                }
-                var observer = new MutationObserver(function(records) {
-                    var element_arr = window.document.querySelectorAll(selector);
-                    if (element_arr) {
-                        for (var i = 0; i < element_arr.length; i++) {
-                            if (element_arr[i].dataset.detected !== "1") {
-                                element_arr[i].dataset.detected = "1";
-                                callback(element_arr[i]);
-                            }
-                        }
-                    }
-                });
-                observer.observe(window.document, {
-                    childList: true,
-                    subtree: true
-                });
-            } else if (options.type = "one_time_promise") {
-                return new Promise(function(resolve) {
-                    var element = window.document.querySelector(options.selector);
-                    if (element) {
-                        resolve(element);
-                    } else {
-                        var observer = new MutationObserver(function() {
-                            var element = window.document.querySelector(selector);
-                            if (element) {
-                                resolve(element);
-                                observer.disconnect(window.document);
-                            }
-                        });
-                        observer.observe(window.document, {
-                            childList: true,
-                            subtree: true
-                        });
-                    }
-                });
-            }
-        },
-        wait_for: function(selector, root) {
-            return new Promise(function(resolve) {
-                var resolved = false;
-                var element = $(selector, root).get(0);
-                if (element) {
-                    resolve(element);
-                } else {
-                    var observer = new MutationObserver(function() {
-                        if (resolved === false) {
-                            element = $(selector, root).get(0);
-                            if (element) {
-                                resolve(element);
-                                observer.disconnect(root);
-                                resolved = true;
-                            }
-                        }
-                    });
-                    observer.observe(root, {
-                        childList: true,
-                        subtree: true
-                    });
-                }
-            });
-        },
-        selector_to_element: function(selector) {
-            return new Promise(function(resolve) {
-                var element = window.document.querySelector(selector);
-                if (element) {
-                    resolve(element);
-                } else {
-                    var observer = new MutationObserver(function() {
-                        var element = window.document.querySelector(selector);
-                        if (element) {
-                            resolve(element);
-                            observer.disconnect(window.document);
-                        }
-                    });
-                    observer.observe(window.document, {
-                        childList: true,
-                        subtree: true
-                    });
-                }
-            });
-        },
-        detect: function(selector, root_element, callback) {
+window.x.detect = function() {
+    function detect(rq) {
+        var root_element = rq.root || document;
+        var callback = rq.callback;
+        var method = rq.method || "normal";
+        var selector = rq.selector || "*";
+        if (method === "normal") {
             root_element = root_element || document;
             var element_arr = root_element.querySelectorAll(selector);
             for (var i = 0; i < element_arr.length; i++) {
@@ -673,6 +506,81 @@ window.x.detector = function() {
             observer.observe(root_element, {
                 childList: true,
                 subtree: true
+            });
+        } else if (method === "detect_once") {
+            return new Promise(function(resolve) {
+                var element = root_element.querySelector(selector);
+                if (element) {
+                    resolve(element);
+                } else {
+                    var observer = new MutationObserver(function() {
+                        var element = root_element.querySelector(selector);
+                        if (element) {
+                            resolve(element);
+                            observer.disconnect(root_element);
+                        }
+                    });
+                    observer.observe(root_element, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            });
+        } else if (method === "wait_for") {
+            return new Promise(function(resolve) {
+                var resolved = false;
+                var element = $(selector, root).get(0);
+                if (element) {
+                    resolve(element);
+                } else {
+                    var observer = new MutationObserver(function() {
+                        if (resolved === false) {
+                            element = $(selector, root).get(0);
+                            if (element) {
+                                resolve(element);
+                                observer.disconnect(root);
+                                resolved = true;
+                            }
+                        }
+                    });
+                    observer.observe(root, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            });
+        }
+    }
+    return detect;
+}();
+
+window.x.ajax = function() {
+    var api_hash = {};
+    chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+        if (message._target === "bg_api") {
+            if (api_hash[message.api_name] && api_hash[message.api_name][message.method_name]) {
+                var output = api_hash[message.api_name][message.method_name](input);
+                if (output instanceof Promise) {
+                    output.then(callback);
+                    return true;
+                } else {
+                    callback(output);
+                }
+            }
+        }
+    });
+    return {
+        register: function(api_name, method_hash) {
+            api_hash[api_name] = method_hash;
+        },
+        exec: function(api_name, method_name, input) {
+            return new Promise(function(resolve) {
+                chrome.runtime.sendMessage({
+                    _target: "bg_api",
+                    api_name: api_name,
+                    method_name: method_name,
+                    input: input
+                }, resolve);
             });
         }
     };

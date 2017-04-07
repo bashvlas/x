@@ -6,6 +6,7 @@
 			var root_element = rq.root || document;
 			var callback = rq.callback;
 			var method = rq.method || "normal";
+			var selector = rq.selector || "*";
 
 			if ( method === "normal" ) {
 
@@ -47,11 +48,11 @@
 
 				observer.observe( root_element, { childList: true, subtree: true } );
 
-			} else if ( method === "detect_once" ) {
+			} else if ( method === "once" ) {
 
 				return new Promise( function ( resolve ) {
 
-					var element = window.document.querySelector( selector );
+					var element = root_element.querySelector( selector );
 
 					if ( element ) {
 
@@ -61,18 +62,18 @@
 
 						var observer = new MutationObserver( function () {
 					
-							var element = window.document.querySelector( selector );
+							var element = root_element.querySelector( selector );
 
 							if ( element ) {
 
 								resolve( element );
-								observer.disconnect( window.document );
+								observer.disconnect( root_element );
 
 							};
 
 						})
 
-						observer.observe( window.document, { childList: true, subtree: true } );
+						observer.observe( root_element, { childList: true, subtree: true } );
 
 					};
 
