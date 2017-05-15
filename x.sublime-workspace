@@ -367,7 +367,7 @@
 			"file": "src/util.js",
 			"settings":
 			{
-				"buffer_size": 4581,
+				"buffer_size": 5332,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -376,7 +376,16 @@
 			"file": "src/ajax.js",
 			"settings":
 			{
-				"buffer_size": 3049,
+				"buffer_size": 6305,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/conv.js",
+			"settings":
+			{
+				"buffer_size": 263,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -385,16 +394,8 @@
 			"file": "build.js",
 			"settings":
 			{
-				"buffer_size": 935,
+				"buffer_size": 969,
 				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "dist/x.min.js",
-			"settings":
-			{
-				"buffer_size": 7589,
 				"line_ending": "Unix"
 			}
 		},
@@ -410,7 +411,7 @@
 			"file": "src/bg_api.js",
 			"settings":
 			{
-				"buffer_size": 927,
+				"buffer_size": 937,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -466,6 +467,9 @@
 	},
 	"file_history":
 	[
+		"/home/vlas/chrome_extension_developer/x/dist/x.min.js",
+		"/home/vlas/.config/google-chrome/Default/Extensions/gkojfkhlekighikafcpjkiklfbnlmeio/1.41.614_0/js/conf.js",
+		"/home/vlas/.config/google-chrome/Default/Extensions/gkojfkhlekighikafcpjkiklfbnlmeio/1.41.614_0/js/about.html",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/src/js/background/main.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/src/js/background/AmacheteApiManager.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/src/js/background/ProductDataManager.js",
@@ -590,10 +594,7 @@
 		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/toolbar.html",
 		"/home/vlas/chrome_extension_developer/extension_arr/vestedyeti/extension/js/cs.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/vestedyeti/extension/manifest.json",
-		"/home/vlas/chrome_extension_developer/extension_arr/vestedyeti/extension/js/bg.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/notrumpazon/extension/bg.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/extension/manifest.json",
-		"/home/vlas/chrome_extension_developer/extension_arr/extension/bg.js"
+		"/home/vlas/chrome_extension_developer/extension_arr/vestedyeti/extension/js/bg.js"
 	],
 	"find":
 	{
@@ -621,6 +622,12 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"    ",
+			"        ",
+			"       ",
+			"      ",
+			"     ",
+			"    ",
 			"window.document",
 			"m.model",
 			"||",
@@ -742,13 +749,7 @@
 			", ",
 			"},;",
 			": function",
-			"cont_type",
-			"update_signal",
-			"cont_data_arr_found",
-			"slick_row_to",
-			", ",
-			"detailspop",
-			"details"
+			"cont_type"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -777,7 +778,7 @@
 	"groups":
 	[
 		{
-			"selected": 6,
+			"selected": 5,
 			"sheets":
 			[
 				{
@@ -786,15 +787,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4581,
+						"buffer_size": 5332,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								98,
-								86
+								5198,
+								5198
 							]
 						],
 						"settings":
@@ -803,7 +804,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 3894.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 6,
@@ -815,44 +816,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3049,
+						"buffer_size": 6305,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3049,
-								3049
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "build.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 935,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								506,
-								506
+								6305,
+								6305
 							]
 						],
 						"settings":
@@ -868,25 +840,55 @@
 					"type": "text"
 				},
 				{
-					"buffer": 3,
-					"file": "dist/x.min.js",
+					"buffer": 2,
+					"file": "src/conv.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7589,
+						"buffer_size": 263,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								129,
+								129
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "build.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 969,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								748,
+								748
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -929,15 +931,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 927,
+						"buffer_size": 937,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								502,
-								502
+								365,
+								365
 							]
 						],
 						"settings":
@@ -949,7 +951,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -978,7 +980,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -1044,6 +1046,22 @@
 			[
 				"ama",
 				"~/chrome_extension_developer/extension_arr/amaaxe-extension/amaaxe-extension.sublime-project"
+			],
+			[
+				"am",
+				"~/chrome_extension_developer/extension_arr/amaaxe-extension/amaaxe-extension.sublime-project"
+			],
+			[
+				"data",
+				"~/chrome_extension_developer/chrome_extension_database/database.sublime-project"
+			],
+			[
+				"dra",
+				"~/chrome_extension_developer/extension_arr/draftkings/draftkings.sublime-project"
+			],
+			[
+				"x",
+				"~/chrome_extension_developer/extension_arr/x/x.sublime-project"
 			],
 			[
 				"amax",

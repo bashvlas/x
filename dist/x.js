@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":24,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":42,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -164,6 +164,34 @@ window.x.util = function() {
             return new Promise(function(resolve) {
                 setTimeout(resolve, time);
             });
+        },
+        cookie_to_hash: function(cookie) {
+            var pair_arr = cookie.split(/;\s*/);
+            var cookie_hash = {};
+            for (var i = 0; i < pair_arr.length; i++) {
+                pair_arr[i] = pair_arr[i].split("=");
+                cookie_hash[pair_arr[i][0]] = pair_arr[i][1];
+            }
+            return cookie_hash;
+        }
+    };
+}();
+
+window.x.procedures = function() {
+    return {
+        load_config: function() {
+            return x.ajax({
+                method: "get_json",
+                url: chrome.extension.getURL("/config.json")
+            }).then(function(config) {
+                return new Promise(function(resolve) {
+                    chrome.storage.local.set({
+                        config: config
+                    }, function() {
+                        resolve(config);
+                    });
+                });
+            });
         }
     };
 }();
@@ -286,6 +314,111 @@ window.x.ajax = function() {
             return encodeURIComponent(name) + "=" + encodeURIComponent(obj[name]);
         }).join("&");
     }
+    function http(request) {
+        var body;
+        if (request.method === "POST" && request.content_type === "application/x-www-form-urlencoded") {
+            body = x.ajax.obj_to_form_data(request.body);
+        } else if (request.method === "POST" && request.content_type === "application/json") {
+            body = JSON.stringify(request.body);
+        }
+        return window.fetch(request.url, {
+            method: request.method,
+            credentials: "include",
+            headers: new Headers({
+                "Content-Type": request.content_type,
+                Accept: request.accept
+            }),
+            body: body
+        }).then(function(r) {
+            return r.text().then(function(text) {
+                return {
+                    head: {
+                        error: false,
+                        code: 0,
+                        http_req: request,
+                        status: r.status,
+                        headers: r.headers
+                    },
+                    body: {
+                        text: text
+                    }
+                };
+            });
+        }).catch(function(response) {
+            return {
+                head: {
+                    error: true,
+                    code: 1,
+                    http_req: request
+                }
+            };
+        });
+    }
+    function xhr(rq) {
+        return new Promise(function(resolve) {
+            function readystatechange_listener() {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        resolve({
+                            error: false,
+                            response: this.response
+                        });
+                    } else {
+                        resolve({
+                            error: true,
+                            response: this.response
+                        });
+                    }
+                }
+            }
+            function timeout_listener() {}
+            function load_listener() {
+                if (this.status === 200) {
+                    resolve({
+                        error: false,
+                        response: this.response
+                    });
+                } else {
+                    resolve({
+                        error: true
+                    });
+                }
+            }
+            function error_listener() {
+                resolve({
+                    error: true
+                });
+            }
+            var xhr = new XMLHttpRequest();
+            xhr.open(rq.method, rq.url, true);
+            if (rq.timeout) {
+                xhr.timeout = rq.timeout;
+            }
+            xhr.responseType = rq.response_type || "text";
+            if (rq.headers) {
+                Object.keys(rq.headers).forEach(function(key) {
+                    xhr.setRequestHeader(key, rq.headers[key]);
+                });
+            }
+            if (rq.rq_body_type === "json") {
+                xhr.setRequestHeader("Content-Type", "application/json");
+            }
+            xhr.addEventListener("load", load_listener);
+            xhr.addEventListener("error", error_listener);
+            xhr.addEventListener("timeout", timeout_listener);
+            if (rq.rq_body_type === "json") {
+                var rq_body = JSON.stringify(rq.rq_body);
+            } else if (rq.rq_body_type === "form_data") {
+                var rq_body = new FormData();
+                Object.keys(rq.rq_body).forEach(function(key) {
+                    rq_body.append(key, rq.rq_body[key]);
+                });
+            } else {
+                var rq_body = null;
+            }
+            xhr.send(rq_body);
+        });
+    }
     function ajax(rq) {
         var headers = new Headers(rq.headers || {});
         if (rq.method === "get_json") {
@@ -360,6 +493,10 @@ window.x.ajax = function() {
             }).catch(function(response) {
                 return null;
             });
+        } else if (rq.method === "http") {
+            return http(rq.data);
+        } else if (rq.method === "xhr") {
+            return xhr(rq.data);
         }
     }
     return ajax;
@@ -507,7 +644,7 @@ window.x.detect = function() {
                 childList: true,
                 subtree: true
             });
-        } else if (method === "detect_once") {
+        } else if (method === "once") {
             return new Promise(function(resolve) {
                 var element = root_element.querySelector(selector);
                 if (element) {
@@ -554,12 +691,12 @@ window.x.detect = function() {
     return detect;
 }();
 
-window.x.ajax = function() {
+window.x.bg_api = function() {
     var api_hash = {};
     chrome.runtime.onMessage.addListener(function(message, sender, callback) {
         if (message._target === "bg_api") {
             if (api_hash[message.api_name] && api_hash[message.api_name][message.method_name]) {
-                var output = api_hash[message.api_name][message.method_name](input);
+                var output = api_hash[message.api_name][message.method_name](message.input);
                 if (output instanceof Promise) {
                     output.then(callback);
                     return true;
@@ -584,4 +721,114 @@ window.x.ajax = function() {
             });
         }
     };
+}();
+
+window.x.conv = function() {
+    var converters_hash = {};
+    var options = {
+        debug: true
+    };
+    var conv_with_data = function() {
+        var conv = function(namespace, from_name, to_name, input) {
+            var conv_hash = converters_hash[namespace];
+            var conv_name = from_name + "_to_" + to_name;
+            var conv_data = {
+                from_name: from_name,
+                to_name: to_name,
+                conv_data_arr: [],
+                found: true,
+                input: input,
+                output: undefined
+            };
+            function pseudo_conv(namespace, from_name, to_name, input) {
+                var local_conv_data = conv(namespace, from_name, to_name, input);
+                conv_data.conv_data_arr.push(local_conv_data);
+                return local_conv_data.output;
+            }
+            if (conv_hash[conv_name]) {
+                try {
+                    conv_data.output = conv_hash[conv_name](input, pseudo_conv);
+                    if (conv_data.output instanceof Promise) {
+                        conv_data.output = new Promise(function(resolve) {
+                            conv_data.output.then(function(output) {
+                                resolve(output);
+                            }).catch(function(error) {
+                                conv_data.error = true;
+                                conv_data.stack = error.stack;
+                            });
+                        });
+                    }
+                } catch (error) {
+                    conv_data.error = true;
+                    conv_data.stack = error.stack;
+                }
+            } else {
+                conv_data.found = false;
+            }
+            return conv_data;
+        };
+        return conv;
+    }();
+    var conv_no_data = function() {
+        var conv = function(namespace, from_name, to_name, input) {
+            var conv_hash = converters_hash[namespace];
+            if (conv_hash && conv_hash[from_name + "_to_" + to_name]) {
+                try {
+                    var output = conv_hash[from_name + "_to_" + to_name](input, conv);
+                    if (output instanceof Promise) {
+                        return new Promise(function(resolve, reject) {
+                            output.then(function(output) {
+                                resolve(output);
+                            }).catch(function(error) {
+                                resolve(undefined);
+                            });
+                        });
+                    } else {
+                        return output;
+                    }
+                } catch (error) {
+                    return undefined;
+                }
+            } else {
+                return undefined;
+            }
+        };
+        return conv;
+    }();
+    function log_conv_data(conv_data) {
+        if (conv_data.error) {
+            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: red");
+            console.log(conv_data.input);
+            console.log(conv_data.stack);
+        } else if (!conv_data.found) {
+            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: #F0AD4E");
+            console.log(conv_data.input);
+        } else {
+            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: green");
+            console.log(conv_data.input);
+            console.log(conv_data.output);
+        }
+        conv_data.conv_data_arr.forEach(function(conv_data) {
+            log_conv_data(conv_data);
+        });
+        console.groupEnd();
+    }
+    function conv(namespace, from_name, to_name, input) {
+        if (options.debug) {
+            var conv_data = conv_with_data(namespace, from_name, to_name, input);
+            log_conv_data(conv_data);
+            return conv_data.output;
+        } else {
+            return conv_no_data(namespace, from_name, to_name, input);
+        }
+        var fn = converters_hash[namespace][from_name + "_to_" + to_name];
+        return fn(input, conv);
+    }
+    conv.register = function(namespace, hash) {
+        converters_hash[namespace] = hash;
+    };
+    conv.set_options = function(new_options) {
+        options = new_options;
+    };
+    return conv;
 }();

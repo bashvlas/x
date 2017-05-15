@@ -305,6 +305,59 @@
 
 			},
 
+			cookie_to_hash: function ( cookie ) {
+
+				var pair_arr = cookie.split( /;\s*/ )
+				var cookie_hash = {}; 
+
+				for ( var i = 0; i < pair_arr.length; i++ ) {
+
+					pair_arr[ i ] = pair_arr[ i ].split( "=" );
+
+					cookie_hash[ pair_arr[ i ] [ 0 ] ] = pair_arr[ i ][ 1 ];
+
+				}
+
+			   return cookie_hash;
+
+			},
+
+		};
+
+	} () );
+
+	window.x.procedures = ( function () {
+
+		return {
+
+			load_config: function () {
+
+				return x.ajax({
+
+					method: "get_json",
+					url: chrome.extension.getURL( "/config.json" ),
+
+				})
+				.then( function ( config ) {
+
+					return new Promise( function ( resolve ) {
+
+						chrome.storage.local.set({
+
+							config: config,
+
+						}, function () {
+
+							resolve( config );
+
+						})
+
+					});
+
+				});
+
+			},
+
 		};
 
 	} () );

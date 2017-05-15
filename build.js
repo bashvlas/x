@@ -21,6 +21,7 @@
 		"src/storage.js",
 		"src/detect.js",
 		"src/bg_api.js",
+		"src/conv.js",
 
 	]);
 
@@ -36,6 +37,7 @@
 		"src/storage.js",
 		"src/detect.js",
 		"src/bg_api.js",
+		"src/conv.js",
 
 	], {
 
