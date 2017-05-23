@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":42,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":59,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -173,6 +173,9 @@ window.x.util = function() {
                 cookie_hash[pair_arr[i][0]] = pair_arr[i][1];
             }
             return cookie_hash;
+        },
+        pad: function(n) {
+            return n < 10 ? "0" + n : "" + n;
         }
     };
 }();
@@ -241,40 +244,68 @@ window.x.hub = function() {
     };
 }();
 
-window.x.test = function() {
+window.x.tester = function() {
     return {
-        test: function(fn_name, fn, input_url, output_url) {
-            return Promise.all([ x.ajax.fetch({
-                method: "get_doc",
-                url: input_url
-            }), x.ajax.fetch({
-                method: "get_json",
-                url: output_url
-            }) ]).then(function(arr) {
-                var input = arr[0].body.firstElementChild;
-                var output = arr[1];
-                var real_output = fn(arr[0]);
-                var equal_bool = x.test.compare(output, real_output);
-                x.test.log_test_case(fn_name, input, output, real_output, equal_bool);
+        test_conv: function(test_data_arr) {
+            test_data_arr.forEach(function(test_data) {
+                var namespace = test_data[0];
+                var input_name = test_data[1];
+                var output_name = test_data[2];
+                var input_url = test_data[3];
+                var output_url = test_data[4];
+                return Promise.all([ x.ajax({
+                    method: "get_json",
+                    url: input_url
+                }), x.ajax({
+                    method: "get_json",
+                    url: output_url
+                }) ]).then(function(arr) {
+                    var input = x.tester.unserialize(arr[0]);
+                    var output = x.tester.unserialize(arr[1]);
+                    var conv_data = x.conv.get_conv_data(namespace, input_name, output_name, input);
+                    var equal_bool = x.tester.compare(output, conv_data.output);
+                    x.tester.log_test_case(conv_data, input, output, equal_bool);
+                });
             });
+        },
+        unserialize: function(data) {
+            if (data === null || typeof data !== "object") {
+                return data;
+            } else if (data.__serial_type__ === "element") {
+                return x.tester.html_to_element(data.html);
+            } else if (data.__serial_type__ === "date") {
+                return new Date(data.ts);
+            } else {
+                Object.keys(data).forEach(function(key) {
+                    data[key] = x.tester.unserialize(data[key]);
+                });
+                return data;
+            }
+        },
+        html_to_element: function(html) {
+            var parser = new DOMParser();
+            var dom = parser.parseFromString(html, "text/html");
+            return dom.body.firstElementChild;
         },
         compare: function(obj_1, obj_2) {
             if (obj_1 === obj_2) {
                 return true;
+            } else if (obj_1 instanceof Date && obj_2 instanceof Date) {
+                return obj_1.getTime() === obj_2.getTime();
             } else if (obj_1 === null && obj_2 === null) {
                 return true;
-            } else if (typeof obj_1 === "object" && typeof obj_2 === "object") {
+            } else if (typeof obj_1 === "object" && typeof obj_2 === "object" && obj_1 !== null && obj_2 !== null) {
                 var key_arr_1 = Object.keys(obj_1);
                 var key_arr_2 = Object.keys(obj_2);
                 var equal;
                 for (var i = key_arr_1.length; i--; ) {
-                    equal = x.test.compare(obj_1[key_arr_1[i]], obj_2[key_arr_1[i]]);
+                    equal = x.tester.compare(obj_1[key_arr_1[i]], obj_2[key_arr_1[i]]);
                     if (equal === false) {
                         return false;
                     }
                 }
                 for (var i = key_arr_2.length; i--; ) {
-                    equal = x.test.compare(obj_1[key_arr_2[i]], obj_2[key_arr_2[i]]);
+                    equal = x.tester.compare(obj_1[key_arr_2[i]], obj_2[key_arr_2[i]]);
                     if (equal === false) {
                         return false;
                     }
@@ -284,12 +315,13 @@ window.x.test = function() {
                 return false;
             }
         },
-        log_test_case: function(fn_name, input, output, real_output, equal_bool) {
+        log_test_case: function(conv_data, input, output, equal_bool) {
             var style = equal_bool ? "color:green" : "color:red";
-            console.groupCollapsed("%c " + fn_name, style);
+            console.groupCollapsed("%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name, style);
             console.log(input);
             console.log(output);
-            console.log(real_output);
+            console.log(conv_data.output);
+            x.conv.log_conv_data(conv_data);
             console.groupEnd();
         }
     };
@@ -692,6 +724,9 @@ window.x.detect = function() {
 }();
 
 window.x.bg_api = function() {
+    if (typeof window.chrome.extension === "undefined") {
+        return;
+    }
     var api_hash = {};
     chrome.runtime.onMessage.addListener(function(message, sender, callback) {
         if (message._target === "bg_api") {
@@ -728,11 +763,13 @@ window.x.conv = function() {
     var options = {
         debug: true
     };
+    var conv_data_arr = [];
     var conv_with_data = function() {
         var conv = function(namespace, from_name, to_name, input) {
             var conv_hash = converters_hash[namespace];
             var conv_name = from_name + "_to_" + to_name;
             var conv_data = {
+                namespace: namespace,
                 from_name: from_name,
                 to_name: to_name,
                 conv_data_arr: [],
@@ -795,28 +832,11 @@ window.x.conv = function() {
         };
         return conv;
     }();
-    function log_conv_data(conv_data) {
-        if (conv_data.error) {
-            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: red");
-            console.log(conv_data.input);
-            console.log(conv_data.stack);
-        } else if (!conv_data.found) {
-            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: #F0AD4E");
-            console.log(conv_data.input);
-        } else {
-            console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: green");
-            console.log(conv_data.input);
-            console.log(conv_data.output);
-        }
-        conv_data.conv_data_arr.forEach(function(conv_data) {
-            log_conv_data(conv_data);
-        });
-        console.groupEnd();
-    }
     function conv(namespace, from_name, to_name, input) {
         if (options.debug) {
             var conv_data = conv_with_data(namespace, from_name, to_name, input);
-            log_conv_data(conv_data);
+            x.conv.log_conv_data(conv_data);
+            conv_data_arr.push(conv_data);
             return conv_data.output;
         } else {
             return conv_no_data(namespace, from_name, to_name, input);
@@ -829,6 +849,29 @@ window.x.conv = function() {
     };
     conv.set_options = function(new_options) {
         options = new_options;
+    };
+    conv.log_conv_data = function(conv_data) {
+        var title = "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
+        if (conv_data.error) {
+            console.groupCollapsed(title, "color: red");
+            console.log(conv_data.input);
+            console.log(conv_data.stack);
+        } else if (!conv_data.found) {
+            console.groupCollapsed(title, "color: #F0AD4E");
+            console.log(conv_data.input);
+        } else {
+            console.groupCollapsed(title, "color: green");
+            console.log(conv_data.input);
+            console.log(conv_data.output);
+        }
+        conv_data.conv_data_arr.forEach(function(conv_data) {
+            x.conv.log_conv_data(conv_data);
+        });
+        console.groupEnd();
+    };
+    conv.get_conv_data = conv_with_data;
+    conv.flush = function() {
+        conv_data_arr.forEach(conv.log_conv_data);
     };
     return conv;
 }();

@@ -47,7 +47,7 @@
 
 	});
 
-	fs.writeFile( "dist/x.js", metadata_prefix + beautiful.code );
-	fs.writeFile( "dist/x.min.js", metadata_prefix + ugly.code );
+	fs.writeFile( "dist/x.js", metadata_prefix + beautiful.code, function () {} );
+	fs.writeFile( "dist/x.min.js", metadata_prefix + ugly.code, function () {} );
 
 } () );

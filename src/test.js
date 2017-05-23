@@ -1,26 +1,74 @@
 
-	window.x.test = ( function () {
+	window.x.tester = ( function () {
 
 		return {
 
-			test: function ( fn_name, fn, input_url, output_url ) {
+			test_conv: function ( test_data_arr ) {
 
-				return Promise.all([
-				
-					x.ajax.fetch({ method: "get_doc", url: input_url }),
-					x.ajax.fetch({ method: "get_json", url: output_url }),
+				test_data_arr.forEach( function ( test_data ) {
 
-				])
-				.then( function ( arr ) {
+					var namespace = test_data[ 0 ];
+					var input_name = test_data[ 1 ];
+					var output_name = test_data[ 2 ];
+					var input_url = test_data[ 3 ];
+					var output_url = test_data[ 4 ];
 
-					var input = arr[ 0 ].body.firstElementChild;
-					var output = arr[ 1 ];
-					var real_output = fn( arr[ 0 ] );
-					var equal_bool = x.test.compare( output, real_output );
+					return Promise.all([
+					
+						x.ajax({ method: "get_json", url: input_url }),
+						x.ajax({ method: "get_json", url: output_url }),
 
-					x.test.log_test_case( fn_name, input, output, real_output, equal_bool );
+					])
+					.then( function ( arr ) {
+
+						var input = x.tester.unserialize( arr[ 0 ] );
+						var output = x.tester.unserialize( arr[ 1 ]);
+
+						var conv_data = x.conv.get_conv_data( namespace, input_name, output_name, input );
+						var equal_bool = x.tester.compare( output, conv_data.output );
+
+						x.tester.log_test_case( conv_data, input, output, equal_bool );
+
+					});
 
 				});
+
+			},
+
+			unserialize: function ( data ) {
+
+				if ( data === null || typeof data !== "object" ) {
+
+					return data;
+
+				} else if ( data.__serial_type__ === "element" ) {
+
+					return x.tester.html_to_element( data.html );
+
+				} else if ( data.__serial_type__ === "date" ) {
+
+					return new Date( data.ts );
+
+				} else {
+
+					Object.keys( data ).forEach( function ( key ) {
+
+						data[ key ] = x.tester.unserialize( data[ key ] );
+
+					});
+
+					return data;
+
+				};
+
+			},
+
+			html_to_element: function ( html ) {
+
+				var parser = new DOMParser;
+				var dom = parser.parseFromString( html, 'text/html');
+
+				return dom.body.firstElementChild;
 
 			},
 
@@ -30,11 +78,15 @@
 
 					return true;
 
+				} else if ( obj_1 instanceof Date && obj_2 instanceof Date ) {
+
+					return obj_1.getTime() === obj_2.getTime();
+
 				} else if ( obj_1 === null && obj_2 === null ) {
 
 					return true;
 
-				} else if ( typeof obj_1 === "object" && typeof obj_2 === "object" ) {
+				} else if ( typeof obj_1 === "object" && typeof obj_2 === "object" && obj_1 !== null && obj_2 !== null ) {
 
 					var key_arr_1 = Object.keys( obj_1 );
 					var key_arr_2 = Object.keys( obj_2 );
@@ -42,7 +94,7 @@
 
 					for ( var i = key_arr_1.length; i--; ) {
 
-						equal = x.test.compare( obj_1[ key_arr_1[ i ] ], obj_2[ key_arr_1[ i ] ] );
+						equal = x.tester.compare( obj_1[ key_arr_1[ i ] ], obj_2[ key_arr_1[ i ] ] );
 
 						if ( equal === false ) {
 
@@ -54,7 +106,7 @@
 
 					for ( var i = key_arr_2.length; i--; ) {
 
-						equal = x.test.compare( obj_1[ key_arr_2[ i ] ], obj_2[ key_arr_2[ i ] ] );
+						equal = x.tester.compare( obj_1[ key_arr_2[ i ] ], obj_2[ key_arr_2[ i ] ] );
 
 						if ( equal === false ) {
 
@@ -74,15 +126,17 @@
 
 			},
 
-			log_test_case: function ( fn_name, input, output, real_output, equal_bool ) {
+			log_test_case: function ( conv_data, input, output, equal_bool ) {
 
 				var style = equal_bool ? "color:green" : "color:red";
 
-				console.groupCollapsed( "%c " + fn_name, style );
+				console.groupCollapsed( "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name, style );
 			
 				console.log( input );
 				console.log( output );
-				console.log( real_output );
+				console.log( conv_data.output );
+
+				x.conv.log_conv_data( conv_data );
 
 				console.groupEnd();
 

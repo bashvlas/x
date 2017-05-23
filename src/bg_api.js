@@ -1,6 +1,12 @@
 
 	window.x.bg_api = ( function () {
 
+		if ( typeof window.chrome.extension === "undefined" ) {
+
+			return;
+
+		};
+
 		var api_hash = {};
 
 		chrome.runtime.onMessage.addListener( function ( message, sender, callback ) {

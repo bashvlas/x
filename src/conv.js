@@ -9,6 +9,7 @@
 				debug: true,
 
 			};
+			var conv_data_arr = [];
 
 		// util functions
 
@@ -20,6 +21,7 @@
 					var conv_name = from_name + "_to_" + to_name;
 					var conv_data = {
 
+						namespace: namespace,
 						from_name: from_name,
 						to_name: to_name,
 
@@ -142,37 +144,6 @@
 
 			} () );
 
-			function log_conv_data ( conv_data ) {
-
-				if ( conv_data.error ) {
-
-					console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: red");
-					console.log(conv_data.input);
-					console.log(conv_data.stack);
-
-				} else if (!conv_data.found) {
-
-					console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: #F0AD4E");
-					console.log(conv_data.input);
-
-				} else {
-
-					console.groupCollapsed("%c " + conv_data.from_name + " to " + conv_data.to_name, "color: green");
-					console.log(conv_data.input);
-					console.log(conv_data.output);
-
-				}
-
-				conv_data.conv_data_arr.forEach( function ( conv_data ) {
-
-					log_conv_data( conv_data );
-
-				});
-
-				console.groupEnd();
-
-			};
-
 		// main function
 
 			function conv ( namespace, from_name, to_name, input ) {
@@ -181,7 +152,9 @@
 
 					var conv_data = conv_with_data( namespace, from_name, to_name, input );
 
-					log_conv_data( conv_data );
+					x.conv.log_conv_data( conv_data );
+
+					conv_data_arr.push( conv_data );
 
 					return conv_data.output;
 
@@ -208,6 +181,47 @@
 			conv.set_options = function ( new_options ) {
 
 				options = new_options;
+
+			};
+
+			conv.log_conv_data = function ( conv_data ) {
+
+				var title = "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
+
+				if ( conv_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(conv_data.input);
+					console.log(conv_data.stack);
+
+				} else if (!conv_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(conv_data.input);
+
+				} else {
+
+					console.groupCollapsed( title, "color: green" );
+					console.log(conv_data.input);
+					console.log(conv_data.output);
+
+				}
+
+				conv_data.conv_data_arr.forEach( function ( conv_data ) {
+
+					x.conv.log_conv_data( conv_data );
+
+				});
+
+				console.groupEnd();
+
+			};
+
+			conv.get_conv_data = conv_with_data;
+
+			conv.flush = function () {
+
+				conv_data_arr.forEach( conv.log_conv_data );
 
 			};
 
