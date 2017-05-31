@@ -105,6 +105,7 @@
 								resolve({
 
 									error: false,
+									status: this.status,
 									response: this.response,
 
 								});
@@ -114,6 +115,7 @@
 								resolve({
 
 									error: true,
+									status: this.status,
 									response: this.response,
 
 								});
@@ -135,6 +137,7 @@
 							resolve({
 
 								error: false,
+								status: this.status,
 								response: this.response,
 
 							});
@@ -143,6 +146,7 @@
 
 							resolve({
 
+								status: this.status,
 								error: true,
 
 							});
@@ -155,6 +159,7 @@
 
 						resolve({
 
+							status: this.status,
 							error: true,
 
 						});
@@ -232,6 +237,7 @@
 		function ajax ( rq ) {
 
 			var headers = new Headers( rq.headers || {} );
+			var credentials = rq.credentials || "include";
 
 			if ( rq.method === "get_json" ) {
 
@@ -263,7 +269,7 @@
 				return window.fetch( rq.url, {
 
 					method: "GET",
-					credentials: "include",
+					credentials: credentials,
 					headers: headers,
 
 				})
@@ -288,7 +294,7 @@
 				return window.fetch( rq.url, {
 
 					method: "GET",
-					credentials: "include",
+					credentials: credentials,
 					headers: headers,
 
 				})
@@ -308,7 +314,7 @@
 				return window.fetch( rq.url, {
 
 					method: "GET",
-					credentials: "include",
+					credentials: credentials,
 					headers: headers,
 
 				})
@@ -330,7 +336,7 @@
 				return window.fetch( rq.url, {
 
 					method: "POST",
-					credentials: "include",
+					credentials: credentials,
 					body: JSON.stringify( rq.body ),
 					headers: headers,
 
@@ -358,7 +364,7 @@
 				return window.fetch( rq.url, {
 
 					method: "POST",
-					credentials: "include",
+					credentials: credentials,
 					body: obj_to_form_data( rq.body ),
 					headers: headers,
 

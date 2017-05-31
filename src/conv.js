@@ -7,6 +7,7 @@
 			var options = {
 
 				debug: true,
+				silence: [],
 
 			};
 			var conv_data_arr = [];
@@ -152,9 +153,12 @@
 
 					var conv_data = conv_with_data( namespace, from_name, to_name, input );
 
-					x.conv.log_conv_data( conv_data );
+					if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
 
-					conv_data_arr.push( conv_data );
+						x.conv.log_conv_data( conv_data );
+						conv_data_arr.push( conv_data );
+
+					};
 
 					return conv_data.output;
 

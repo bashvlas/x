@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":59,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":65,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -393,11 +393,13 @@ window.x.ajax = function() {
                     if (this.status === 200) {
                         resolve({
                             error: false,
+                            status: this.status,
                             response: this.response
                         });
                     } else {
                         resolve({
                             error: true,
+                            status: this.status,
                             response: this.response
                         });
                     }
@@ -408,16 +410,19 @@ window.x.ajax = function() {
                 if (this.status === 200) {
                     resolve({
                         error: false,
+                        status: this.status,
                         response: this.response
                     });
                 } else {
                     resolve({
+                        status: this.status,
                         error: true
                     });
                 }
             }
             function error_listener() {
                 resolve({
+                    status: this.status,
                     error: true
                 });
             }
@@ -453,6 +458,7 @@ window.x.ajax = function() {
     }
     function ajax(rq) {
         var headers = new Headers(rq.headers || {});
+        var credentials = rq.credentials || "include";
         if (rq.method === "get_json") {
             return window.fetch(rq.url, {
                 method: "GET",
@@ -468,7 +474,7 @@ window.x.ajax = function() {
         } else if (rq.method === "get_doc") {
             return window.fetch(rq.url, {
                 method: "GET",
-                credentials: "include",
+                credentials: credentials,
                 headers: headers
             }).then(function(r) {
                 return r.text().then(function(text) {
@@ -480,7 +486,7 @@ window.x.ajax = function() {
         } else if (rq.method === "get_blob") {
             return window.fetch(rq.url, {
                 method: "GET",
-                credentials: "include",
+                credentials: credentials,
                 headers: headers
             }).then(function(r) {
                 return r.blob();
@@ -490,7 +496,7 @@ window.x.ajax = function() {
         } else if (rq.method === "get_text") {
             return window.fetch(rq.url, {
                 method: "GET",
-                credentials: "include",
+                credentials: credentials,
                 headers: headers
             }).then(function(r) {
                 return r.text();
@@ -501,7 +507,7 @@ window.x.ajax = function() {
             headers.append("Content-Type", "application/json");
             return window.fetch(rq.url, {
                 method: "POST",
-                credentials: "include",
+                credentials: credentials,
                 body: JSON.stringify(rq.body),
                 headers: headers
             }).then(function(r) {
@@ -515,7 +521,7 @@ window.x.ajax = function() {
             headers.append("Content-Type", "application/x-www-form-urlencoded");
             return window.fetch(rq.url, {
                 method: "POST",
-                credentials: "include",
+                credentials: credentials,
                 body: obj_to_form_data(rq.body),
                 headers: headers
             }).then(function(r) {
@@ -724,7 +730,7 @@ window.x.detect = function() {
 }();
 
 window.x.bg_api = function() {
-    if (typeof window.chrome.extension === "undefined") {
+    if (typeof chrome.extension === "undefined") {
         return;
     }
     var api_hash = {};
@@ -761,7 +767,8 @@ window.x.bg_api = function() {
 window.x.conv = function() {
     var converters_hash = {};
     var options = {
-        debug: true
+        debug: true,
+        silence: []
     };
     var conv_data_arr = [];
     var conv_with_data = function() {
@@ -835,8 +842,10 @@ window.x.conv = function() {
     function conv(namespace, from_name, to_name, input) {
         if (options.debug) {
             var conv_data = conv_with_data(namespace, from_name, to_name, input);
-            x.conv.log_conv_data(conv_data);
-            conv_data_arr.push(conv_data);
+            if (options.silence && options.silence.indexOf(from_name + "_to_" + to_name) === -1) {
+                x.conv.log_conv_data(conv_data);
+                conv_data_arr.push(conv_data);
+            }
             return conv_data.output;
         } else {
             return conv_no_data(namespace, from_name, to_name, input);

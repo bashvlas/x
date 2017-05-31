@@ -4,7 +4,7 @@
 		var parser = new DOMParser();
 
 		return {
-			
+
 			open_new_tab: function ( url ) {
 
 				chrome.tabs.create({ active: true, url: url });
@@ -24,7 +24,7 @@
 				});
 
 			},
-			
+
 			list_to_arr: function ( list ) {
 
 				return Array.prototype.slice.call( list );

@@ -1,7 +1,7 @@
 
 	window.x.bg_api = ( function () {
 
-		if ( typeof window.chrome.extension === "undefined" ) {
+		if ( typeof chrome.extension === "undefined" ) {
 
 			return;
 

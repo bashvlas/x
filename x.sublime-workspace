@@ -371,25 +371,7 @@
 			"file": "src/util.js",
 			"settings":
 			{
-				"buffer_size": 5408,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/ajax.js",
-			"settings":
-			{
-				"buffer_size": 6305,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/conv.js",
-			"settings":
-			{
-				"buffer_size": 3975,
+				"buffer_size": 5402,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -404,28 +386,35 @@
 			}
 		},
 		{
-			"file": "build.js",
+			"file": "src/storage.js",
 			"settings":
 			{
-				"buffer_size": 969,
+				"buffer_size": 1371,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "metadata.json",
+			"file": "src/query.js",
 			"settings":
 			{
-				"buffer_size": 96,
+				"buffer_size": 2037,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/bg_api.js",
+			"file": "src/hub.js",
 			"settings":
 			{
-				"buffer_size": 1014,
-				"encoding": "UTF-8",
+				"buffer_size": 1309,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/main.js",
+			"settings":
+			{
+				"buffer_size": 45,
 				"line_ending": "Unix"
 			}
 		},
@@ -434,6 +423,31 @@
 			"settings":
 			{
 				"buffer_size": 2307,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/conv.js",
+			"settings":
+			{
+				"buffer_size": 4099,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/bg_api.js",
+			"settings":
+			{
+				"buffer_size": 1007,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/ajax.js",
+			"settings":
+			{
+				"buffer_size": 6511,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -480,6 +494,20 @@
 	},
 	"file_history":
 	[
+		"/home/vlas/chrome_extension_developer/x/x.sublime-project",
+		"/home/vlas/chrome_extension_developer/x/src/detect.js",
+		"/home/vlas/chrome_extension_developer/x/src/bg_api.js",
+		"/home/vlas/chrome_extension_developer/x/metadata.json",
+		"/home/vlas/chrome_extension_developer/x/src/query.js",
+		"/home/vlas/chrome_extension_developer/x/build.js",
+		"/home/vlas/chrome_extension_developer/x/src/util.js",
+		"/home/vlas/chrome_extension_developer/x/src/ajax.js",
+		"/home/vlas/chrome_extension_developer/x/src/conv.js",
+		"/home/vlas/chrome_extension_developer/x/src/storage.js",
+		"/home/vlas/chrome_extension_developer/x/src/test.js",
+		"/home/vlas/.config/google-chrome/Default/Extensions/jcnfkjjanbdfabigknbedgkfjkljhbdn/0.188_1/manifest.json",
+		"/home/vlas/.config/google-chrome/Default/Extensions/hmanipjnbjnhoicdnooapcnfonebefel/3.11.0_0/manifest.json",
+		"/home/vlas/.config/google-chrome/Default/Extensions/hmanipjnbjnhoicdnooapcnfonebefel/3.11.0_0/scripts/override.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.i.json",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.o.json",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/src/static/js/x.min.js",
@@ -593,21 +621,7 @@
 		"/home/vlas/chrome_extension_developer/extension_arr/facebook_ads/extension/manifest.json",
 		"/home/vlas/chrome_extension_developer/extension_arr/facebook_ads/extension/js/AdsConverter.js",
 		"/home/vlas/Downloads/lifetime_earnings_by_client.csv",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/main/style.css",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/main/index.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/main/main.js",
-		"/home/vlas/Downloads/Chrome Extension - Sheet1.csv",
-		"/home/vlas/chrome_extension_developer/extension_arr/helpflow/extension/js/content/Controller.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/creation/main.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/creation/index.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/bower_components/paper-styles/color.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/bower_components/iron-icons/av-icons.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/bower_components/iron-icon/iron-icon.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/creation/style.css",
-		"/home/vlas/chrome_extension_developer/extension_arr/helpflow/extension/js/Util.js",
-		"/home/vlas/Downloads/PapaParse-4.1.2/papaparse.min.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/vestedyeti/extension/toolbar.html",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/popup/main.js"
+		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/pages/main/style.css"
 	],
 	"find":
 	{
@@ -635,6 +649,18 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"error: true",
+			"xhr",
+			"set_options",
+			"equal",
+			"storage",
+			"chrome.storage",
+			"permission",
+			"header",
+			"xhr",
+			"credentials: \"include\"",
+			"credentials",
+			"window.chrome",
 			"pad",
 			"ojb_1",
 			"compare",
@@ -750,19 +776,7 @@
 			"level_data_to_color",
 			");\n",
 			"(function",
-			"ng-",
-			"amachete",
-			"angular",
-			"contest_id_to_level_data",
-			"cont_data.level_data",
-			"cont_data.",
-			"cont_data_arr",
-			"state.page_data",
-			"page_data",
-			"  ",
-			"empty",
-			"console.log",
-			"contest_id_to_level_data"
+			"ng-"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -791,7 +805,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 7,
 			"sheets":
 			[
 				{
@@ -800,15 +814,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5408,
+						"buffer_size": 5402,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4900,
-								4892
+								0,
+								0
 							]
 						],
 						"settings":
@@ -817,72 +831,14 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 4567.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "src/ajax.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 6305,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								5439,
-								5439
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 4546.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "src/conv.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3975,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3003,
-								3006
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1875.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
 					"file": "src/test.js",
 					"semi_transient": false,
 					"settings":
@@ -894,8 +850,8 @@
 						"selection":
 						[
 							[
-								2367,
-								2367
+								722,
+								722
 							]
 						],
 						"settings":
@@ -904,27 +860,85 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 1177.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 3,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
-					"file": "build.js",
+					"buffer": 2,
+					"file": "src/storage.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 969,
+						"buffer_size": 1371,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								748,
-								748
+								1371,
+								1371
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/query.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2037,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2016,
+								2016
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/hub.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1309,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								407,
+								407
 							]
 						],
 						"settings":
@@ -941,53 +955,24 @@
 				},
 				{
 					"buffer": 5,
-					"file": "metadata.json",
+					"file": "src/main.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 96,
+						"buffer_size": 45,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								96,
-								96
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "src/bg_api.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1014,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								36,
-								36
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -997,7 +982,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 7,
+					"buffer": 6,
 					"file": "src/detect.js",
 					"semi_transient": false,
 					"settings":
@@ -1009,8 +994,8 @@
 						"selection":
 						[
 							[
-								216,
-								216
+								0,
+								0
 							]
 						],
 						"settings":
@@ -1022,7 +1007,94 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/conv.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4099,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2596,
+								2596
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1528.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "src/bg_api.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1007,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "src/ajax.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6511,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2457,
+								2457
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1693.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -1067,7 +1139,7 @@
 	"project": "x.sublime-project",
 	"replace":
 	{
-		"height": 38.0
+		"height": 364.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1082,9 +1154,13 @@
 	"select_project":
 	{
 		"height": 500.0,
-		"last_filter": "ama",
+		"last_filter": "draft",
 		"selected_items":
 		[
+			[
+				"draft",
+				"~/chrome_extension_developer/old_extension_arr/draftkings/draftkings.sublime-project"
+			],
 			[
 				"ama",
 				"~/chrome_extension_developer/extension_arr/amaaxe-extension/amaaxe-extension.sublime-project"
