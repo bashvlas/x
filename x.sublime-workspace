@@ -371,16 +371,7 @@
 			"file": "src/util.js",
 			"settings":
 			{
-				"buffer_size": 5402,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/test.js",
-			"settings":
-			{
-				"buffer_size": 2943,
+				"buffer_size": 7206,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -390,6 +381,15 @@
 			"settings":
 			{
 				"buffer_size": 1371,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/test.js",
+			"settings":
+			{
+				"buffer_size": 2943,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -447,7 +447,7 @@
 			"file": "src/ajax.js",
 			"settings":
 			{
-				"buffer_size": 6511,
+				"buffer_size": 6914,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -460,7 +460,7 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 392.0,
+		"height": 32.0,
 		"last_filter": "",
 		"selected_items":
 		[
@@ -473,7 +473,7 @@
 				"Snippet: fn"
 			]
 		],
-		"width": 449.0
+		"width": 467.0
 	},
 	"console":
 	{
@@ -649,6 +649,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"rq",
 			"error: true",
 			"xhr",
 			"set_options",
@@ -775,8 +776,7 @@
 			"rootScope",
 			"level_data_to_color",
 			");\n",
-			"(function",
-			"ng-"
+			"(function"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -805,7 +805,7 @@
 	"groups":
 	[
 		{
-			"selected": 7,
+			"selected": 9,
 			"sheets":
 			[
 				{
@@ -814,15 +814,44 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5402,
+						"buffer_size": 7206,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								6750,
+								6750
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 663.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/storage.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1371,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								736,
+								736
 							]
 						],
 						"settings":
@@ -834,11 +863,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 7,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 1,
+					"buffer": 2,
 					"file": "src/test.js",
 					"semi_transient": false,
 					"settings":
@@ -867,35 +896,6 @@
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "src/storage.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1371,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1371,
-								1371
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
 					"buffer": 3,
 					"file": "src/query.js",
 					"semi_transient": false,
@@ -921,7 +921,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
@@ -978,7 +978,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 6,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
@@ -1023,8 +1023,8 @@
 						"selection":
 						[
 							[
-								3167,
-								3167
+								2567,
+								2567
 							]
 						],
 						"settings":
@@ -1036,7 +1036,7 @@
 						"translation.y": 1528.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 5,
 					"type": "text"
 				},
 				{
@@ -1074,15 +1074,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6511,
+						"buffer_size": 6914,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								662,
-								662
+								6577,
+								6577
 							]
 						],
 						"settings":
@@ -1091,10 +1091,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 2964.0,
+						"translation.y": 20.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				}
 			]
@@ -1154,7 +1154,7 @@
 	"select_project":
 	{
 		"height": 500.0,
-		"last_filter": "draft",
+		"last_filter": "",
 		"selected_items":
 		[
 			[
