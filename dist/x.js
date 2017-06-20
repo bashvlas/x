@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":65,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":68,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -662,9 +662,9 @@ window.x.detect = function() {
             root_element = root_element || document;
             var element_arr = root_element.querySelectorAll(selector);
             for (var i = 0; i < element_arr.length; i++) {
-                if (element_arr[0].dataset.detected !== "1") {
-                    element_arr[0].dataset.detected = "1";
-                    callback(element_arr[0]);
+                if (element_arr[i].dataset.detected !== "1") {
+                    element_arr[i].dataset.detected = "1";
+                    callback(element_arr[i]);
                 }
             }
             var observer = new MutationObserver(function(records) {
@@ -704,21 +704,21 @@ window.x.detect = function() {
         } else if (method === "wait_for") {
             return new Promise(function(resolve) {
                 var resolved = false;
-                var element = $(selector, root).get(0);
+                var element = $(selector, root_element).get(0);
                 if (element) {
                     resolve(element);
                 } else {
                     var observer = new MutationObserver(function() {
                         if (resolved === false) {
-                            element = $(selector, root).get(0);
+                            element = $(selector, root_element).get(0);
                             if (element) {
                                 resolve(element);
-                                observer.disconnect(root);
+                                observer.disconnect(root_element);
                                 resolved = true;
                             }
                         }
                     });
-                    observer.observe(root, {
+                    observer.observe(root_element, {
                         childList: true,
                         subtree: true
                     });

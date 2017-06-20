@@ -16,10 +16,10 @@
 
 				for ( var i = 0; i < element_arr.length; i++ ) {
 
-					if ( element_arr[ 0 ].dataset.detected !== "1" ) {
+					if ( element_arr[ i ].dataset.detected !== "1" ) {
 
-						element_arr[ 0 ].dataset.detected = "1";
-						callback( element_arr[ 0 ] );
+						element_arr[ i ].dataset.detected = "1";
+						callback( element_arr[ i ] );
 						
 					};
 
@@ -84,7 +84,7 @@
 				return new Promise( function ( resolve ) {
 
 					var resolved = false;
-					var element = $( selector, root ).get( 0 );
+					var element = $( selector, root_element ).get( 0 );
 
 					if ( element ) {
 
@@ -96,12 +96,12 @@
 
 							if ( resolved === false ) {
 
-								element = $( selector, root ).get( 0 );
+								element = $( selector, root_element ).get( 0 );
 
 								if ( element ) {
 
 									resolve( element );
-									observer.disconnect( root );
+									observer.disconnect( root_element );
 									resolved = true;
 
 								};
@@ -110,7 +110,7 @@
 
 						});
 
-						observer.observe( root, {
+						observer.observe( root_element, {
 
 							childList: true,
 							subtree: true,
