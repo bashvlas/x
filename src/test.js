@@ -10,19 +10,13 @@
 					var namespace = test_data[ 0 ];
 					var input_name = test_data[ 1 ];
 					var output_name = test_data[ 2 ];
-					var input_url = test_data[ 3 ];
-					var output_url = test_data[ 4 ];
+					var io_url = test_data[ 3 ];
 
-					return Promise.all([
-					
-						x.ajax({ method: "get_json", url: input_url }),
-						x.ajax({ method: "get_json", url: output_url }),
+					x.ajax({ method: "get_json", url: io_url })
+					.then( function ( io ) {
 
-					])
-					.then( function ( arr ) {
-
-						var input = x.tester.unserialize( arr[ 0 ] );
-						var output = x.tester.unserialize( arr[ 1 ]);
+						var input = x.tester.unserialize( io.input );
+						var output = x.tester.unserialize( io.output );
 
 						var conv_data = x.conv.get_conv_data( namespace, input_name, output_name, input );
 						var equal_bool = x.tester.compare( output, conv_data.output );

@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":68,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":71,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -176,6 +176,15 @@ window.x.util = function() {
         },
         pad: function(n) {
             return n < 10 ? "0" + n : "" + n;
+        },
+        trigger: function(element, event_name) {
+            if ("createEvent" in document) {
+                var event = document.createEvent("HTMLEvents");
+                event.initEvent(event_name, false, true);
+                element.dispatchEvent(event);
+            } else {
+                element.fireEvent("on" + event_name);
+            }
         }
     };
 }();
@@ -251,17 +260,13 @@ window.x.tester = function() {
                 var namespace = test_data[0];
                 var input_name = test_data[1];
                 var output_name = test_data[2];
-                var input_url = test_data[3];
-                var output_url = test_data[4];
-                return Promise.all([ x.ajax({
+                var io_url = test_data[3];
+                x.ajax({
                     method: "get_json",
-                    url: input_url
-                }), x.ajax({
-                    method: "get_json",
-                    url: output_url
-                }) ]).then(function(arr) {
-                    var input = x.tester.unserialize(arr[0]);
-                    var output = x.tester.unserialize(arr[1]);
+                    url: io_url
+                }).then(function(io) {
+                    var input = x.tester.unserialize(io.input);
+                    var output = x.tester.unserialize(io.output);
                     var conv_data = x.conv.get_conv_data(namespace, input_name, output_name, input);
                     var equal_bool = x.tester.compare(output, conv_data.output);
                     x.tester.log_test_case(conv_data, input, output, equal_bool);

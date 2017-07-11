@@ -318,7 +318,7 @@
 
 				}
 
-			   return cookie_hash;
+				return cookie_hash;
 
 			},
 
@@ -327,6 +327,22 @@
 				return ( n < 10 ) ? "0" + n : "" + n;
 
 			},
+
+			trigger: function ( element, event_name ) {
+
+				if ( "createEvent" in document) {
+
+					var event = document.createEvent( "HTMLEvents" );
+					event.initEvent( event_name, false, true );
+					element.dispatchEvent( event );
+
+				} else {
+
+					element.fireEvent( "on" + event_name );
+
+				};
+
+			}
 
 		};
 

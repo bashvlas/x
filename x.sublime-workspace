@@ -368,57 +368,6 @@
 	"buffers":
 	[
 		{
-			"file": "src/util.js",
-			"settings":
-			{
-				"buffer_size": 5402,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/storage.js",
-			"settings":
-			{
-				"buffer_size": 1371,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/test.js",
-			"settings":
-			{
-				"buffer_size": 2943,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/query.js",
-			"settings":
-			{
-				"buffer_size": 2037,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/hub.js",
-			"settings":
-			{
-				"buffer_size": 1309,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/main.js",
-			"settings":
-			{
-				"buffer_size": 45,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "src/detect.js",
 			"settings":
 			{
@@ -428,19 +377,19 @@
 			}
 		},
 		{
-			"file": "src/conv.js",
+			"file": "src/test.js",
 			"settings":
 			{
-				"buffer_size": 4099,
+				"buffer_size": 2802,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/bg_api.js",
+			"file": "src/conv.js",
 			"settings":
 			{
-				"buffer_size": 1007,
+				"buffer_size": 4099,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -496,6 +445,20 @@
 	},
 	"file_history":
 	[
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/main.js",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/hub.js",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/query.js",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/3.o.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/3.i.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/2.o.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/2.i.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.o.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/storage.js",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/test.js",
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.i.json",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/bg_api.js",
+		"/home/vlas/Desktop/1.csv",
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/util.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/helpflow/.gitignore",
 		"/home/vlas/Documents/aws_hf_vlasApp2.ppk",
 		"/home/vlas/chrome_extension_developer/x/x.sublime-project",
@@ -512,8 +475,6 @@
 		"/home/vlas/.config/google-chrome/Default/Extensions/jcnfkjjanbdfabigknbedgkfjkljhbdn/0.188_1/manifest.json",
 		"/home/vlas/.config/google-chrome/Default/Extensions/hmanipjnbjnhoicdnooapcnfonebefel/3.11.0_0/manifest.json",
 		"/home/vlas/.config/google-chrome/Default/Extensions/hmanipjnbjnhoicdnooapcnfonebefel/3.11.0_0/scripts/override.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.i.json",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.o.json",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/src/static/js/x.min.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/scraper/product_data_to_score.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/card/card_data_to_product_data.js",
@@ -555,7 +516,6 @@
 		"/home/vlas/Downloads/prod/js/cs.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/draftkings/prod/js/cs.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/draftkings/js/main.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/x/src/util.js",
 		"/home/vlas/Downloads/getentrantsmorewithhep3.html",
 		"/home/vlas/Downloads/prod/static/css/content.css",
 		"/home/vlas/Downloads/prod/manifest.json",
@@ -612,18 +572,7 @@
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/Sidebar.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/main.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/CardDetector.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/AmazonManager.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/global_search_content_script/main.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/Topbar.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/global_search_content_script/Controller.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/x/src/detector.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/js/bg.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/linkedin_autoconnector/extension/js/cs.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/x/dist/x.min.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/x/dist/x.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/facebook_ads/extension/js/cs.js",
-		"/home/vlas/chrome_extension_developer/extension_arr/facebook_ads/extension/manifest.json",
-		"/home/vlas/chrome_extension_developer/extension_arr/facebook_ads/extension/js/AdsConverter.js"
+		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/extension/js/amazon_content_script/AmazonManager.js"
 	],
 	"find":
 	{
@@ -651,6 +600,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"input_url",
 			"0",
 			"detect",
 			"root",
@@ -777,8 +727,7 @@
 			"entry_fee",
 			"x_show_container",
 			"\t\t\t\n",
-			"scraper",
-			"rootScope"
+			"scraper"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -812,19 +761,19 @@
 			[
 				{
 					"buffer": 0,
-					"file": "src/util.js",
+					"file": "src/detect.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5402,
+						"buffer_size": 2339,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5036,
-								5036
+								1653,
+								1657
 							]
 						],
 						"settings":
@@ -833,27 +782,27 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3777.0,
+						"translation.y": 657.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "src/storage.js",
+					"file": "src/test.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1371,
+						"buffer_size": 2802,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								736,
-								736
+								269,
+								269
 							]
 						],
 						"settings":
@@ -865,24 +814,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
 					"buffer": 2,
-					"file": "src/test.js",
+					"file": "src/conv.js",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2943,
+						"buffer_size": 4099,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								722,
-								722
+								1223,
+								1223
 							]
 						],
 						"settings":
@@ -899,179 +848,6 @@
 				},
 				{
 					"buffer": 3,
-					"file": "src/query.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2037,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2016,
-								2016
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 5,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "src/hub.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1309,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								98,
-								98
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "src/main.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 45,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 9,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "src/detect.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2339,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								570,
-								570
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "src/conv.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4099,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2567,
-								2567
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1528.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 8,
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"file": "src/bg_api.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1007,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								885,
-								885
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 9,
 					"file": "src/ajax.js",
 					"semi_transient": false,
 					"settings":
@@ -1083,8 +859,8 @@
 						"selection":
 						[
 							[
-								0,
-								0
+								4910,
+								4910
 							]
 						],
 						"settings":
@@ -1093,10 +869,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 3777.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
