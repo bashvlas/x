@@ -380,7 +380,7 @@
 			"file": "src/test.js",
 			"settings":
 			{
-				"buffer_size": 2802,
+				"buffer_size": 2898,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -445,6 +445,7 @@
 	},
 	"file_history":
 	[
+		"/home/vlas/chrome_extension_developer/extension_arr/x/src/util.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/x/src/main.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/x/src/hub.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/x/src/query.js",
@@ -458,7 +459,6 @@
 		"/home/vlas/chrome_extension_developer/extension_arr/amaaxe-extension/tests/io/1.i.json",
 		"/home/vlas/chrome_extension_developer/extension_arr/x/src/bg_api.js",
 		"/home/vlas/Desktop/1.csv",
-		"/home/vlas/chrome_extension_developer/extension_arr/x/src/util.js",
 		"/home/vlas/chrome_extension_developer/extension_arr/helpflow/.gitignore",
 		"/home/vlas/Documents/aws_hf_vlasApp2.ppk",
 		"/home/vlas/chrome_extension_developer/x/x.sublime-project",
@@ -600,6 +600,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"test_data",
+			"io",
+			"debug",
 			"input_url",
 			"0",
 			"detect",
@@ -724,10 +727,7 @@
 			"contest",
 			"contest_data",
 			"handle_new_level_data",
-			"entry_fee",
-			"x_show_container",
-			"\t\t\t\n",
-			"scraper"
+			"entry_fee"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -773,7 +773,7 @@
 						[
 							[
 								1653,
-								1657
+								1653
 							]
 						],
 						"settings":
@@ -794,15 +794,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2802,
+						"buffer_size": 2898,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								269,
-								269
+								357,
+								357
 							]
 						],
 						"settings":
@@ -830,8 +830,8 @@
 						"selection":
 						[
 							[
-								1223,
-								1223
+								2578,
+								2578
 							]
 						],
 						"settings":
@@ -840,7 +840,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1628.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -859,8 +859,8 @@
 						"selection":
 						[
 							[
-								4910,
-								4910
+								4454,
+								4454
 							]
 						],
 						"settings":
@@ -869,7 +869,7 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 3777.0,
+						"translation.y": 2971.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,

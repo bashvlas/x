@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":71,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":77,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -185,6 +185,19 @@ window.x.util = function() {
             } else {
                 element.fireEvent("on" + event_name);
             }
+        },
+        open_window_with_post_data: function(url, data) {
+            var form = document.createElement("form");
+            var input = document.createElement("input");
+            form.action = url;
+            form.method = "POST";
+            form.target = "_blank";
+            input.name = "data";
+            input.value = JSON.stringify(data);
+            form.appendChild(input);
+            form.style.display = "none";
+            document.body.appendChild(form);
+            form.submit();
         }
     };
 }();
@@ -255,21 +268,21 @@ window.x.hub = function() {
 
 window.x.tester = function() {
     return {
-        test_conv: function(test_data_arr) {
-            test_data_arr.forEach(function(test_data) {
-                var namespace = test_data[0];
-                var input_name = test_data[1];
-                var output_name = test_data[2];
-                var io_url = test_data[3];
-                x.ajax({
-                    method: "get_json",
-                    url: io_url
-                }).then(function(io) {
-                    var input = x.tester.unserialize(io.input);
-                    var output = x.tester.unserialize(io.output);
-                    var conv_data = x.conv.get_conv_data(namespace, input_name, output_name, input);
-                    var equal_bool = x.tester.compare(output, conv_data.output);
-                    x.tester.log_test_case(conv_data, input, output, equal_bool);
+        test_conv: function(conv_name, json_url) {
+            x.ajax({
+                method: "get_json",
+                url: json_url
+            }).then(function(test_data) {
+                Object.keys(test_data).forEach(function(conv_fn_name) {
+                    test_data[conv_fn_name].forEach(function(test_data) {
+                        var input_name = conv_fn_name.split("_to_")[0];
+                        var output_name = conv_fn_name.split("_to_")[1];
+                        var input = x.tester.unserialize(test_data.input);
+                        var output = x.tester.unserialize(test_data.output);
+                        var conv_data = x.conv.get_conv_data(conv_name, input_name, output_name, input);
+                        var equal_bool = x.tester.compare(output, conv_data.output);
+                        x.tester.log_test_case(conv_data, input, output, equal_bool);
+                    });
                 });
             });
         },

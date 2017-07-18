@@ -342,7 +342,28 @@
 
 				};
 
-			}
+			},
+
+			open_window_with_post_data: function ( url, data ) {
+
+				var form = document.createElement( "form" );
+				var input = document.createElement( "input" );
+
+				form.action = url;
+				form.method = "POST";
+				form.target = "_blank";
+
+				input.name = 'data';
+				input.value = JSON.stringify( data );
+
+				form.appendChild( input );
+				form.style.display = "none";
+
+				document.body.appendChild( form );
+				
+				form.submit();
+
+			},
 
 		};
 
