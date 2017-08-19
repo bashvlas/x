@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":77,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":91,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -277,28 +277,53 @@ window.x.tester = function() {
                     test_data[conv_fn_name].forEach(function(test_data) {
                         var input_name = conv_fn_name.split("_to_")[0];
                         var output_name = conv_fn_name.split("_to_")[1];
-                        var input = x.tester.unserialize(test_data.input);
-                        var output = x.tester.unserialize(test_data.output);
-                        var conv_data = x.conv.get_conv_data(conv_name, input_name, output_name, input);
-                        var equal_bool = x.tester.compare(output, conv_data.output);
-                        x.tester.log_test_case(conv_data, input, output, equal_bool);
+                        Promise.all([ x.tester.unserialize(test_data.input), x.tester.unserialize(test_data.output) ]).then(function(io) {
+                            var input = io[0];
+                            var output = io[1];
+                            var conv_data = x.conv.get_conv_data(conv_name, input_name, output_name, input);
+                            var equal_bool = x.tester.compare(output, conv_data.output);
+                            x.tester.log_test_case(conv_data, input, output, equal_bool);
+                        });
                     });
                 });
             });
         },
         unserialize: function(data) {
-            if (data === null || typeof data !== "object") {
-                return data;
-            } else if (data.__serial_type__ === "element") {
-                return x.tester.html_to_element(data.html);
-            } else if (data.__serial_type__ === "date") {
-                return new Date(data.ts);
-            } else {
-                Object.keys(data).forEach(function(key) {
-                    data[key] = x.tester.unserialize(data[key]);
-                });
-                return data;
-            }
+            return new Promise(function(resolve) {
+                if (data === null || typeof data !== "object") {
+                    resolve(data);
+                } else if (data.__serial_type__ === "element") {
+                    resolve(x.tester.html_to_element(data.html));
+                } else if (data.__serial_type__ === "date") {
+                    resolve(new Date(data.ts));
+                } else if (data.__serial_type__ === "page_data") {
+                    x.ajax({
+                        method: "get_text",
+                        url: "pages/" + encodeURIComponent(encodeURIComponent(data.url))
+                    }).then(function(text) {
+                        resolve({
+                            url: data.url,
+                            text: text,
+                            doc: x.util.html_to_doc(text)
+                        });
+                    });
+                } else {
+                    var total_key_count = Object.keys(data).length;
+                    var unserialized_key_count = 0;
+                    Object.keys(data).forEach(function(key) {
+                        x.tester.unserialize(data[key]).then(function(value) {
+                            data[key] = value;
+                            unserialized_key_count += 1;
+                            if (unserialized_key_count === total_key_count) {
+                                resolve(data);
+                            }
+                        });
+                    });
+                    if (Object.keys(data).length === 0) {
+                        resolve(data);
+                    }
+                }
+            });
         },
         html_to_element: function(html) {
             var parser = new DOMParser();

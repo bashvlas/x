@@ -15,13 +15,22 @@
 							var input_name = conv_fn_name.split( "_to_" )[ 0 ];
 							var output_name = conv_fn_name.split( "_to_" )[ 1 ];
 
-							var input = x.tester.unserialize( test_data.input );
-							var output = x.tester.unserialize( test_data.output );
+							Promise.all([
 
-							var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
-							var equal_bool = x.tester.compare( output, conv_data.output );
+								x.tester.unserialize( test_data.input ),
+								x.tester.unserialize( test_data.output )
 
-							x.tester.log_test_case( conv_data, input, output, equal_bool );
+							]).then( function ( io ) {
+
+								var input = io[ 0 ];
+								var output = io[ 1 ];
+
+								var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
+								var equal_bool = x.tester.compare( output, conv_data.output );
+
+								x.tester.log_test_case( conv_data, input, output, equal_bool );
+
+							});
 
 						});
 
@@ -33,29 +42,72 @@
 
 			unserialize: function ( data ) {
 
-				if ( data === null || typeof data !== "object" ) {
+				return new Promise( function ( resolve ) {
 
-					return data;
+					if ( data === null || typeof data !== "object" ) {
 
-				} else if ( data.__serial_type__ === "element" ) {
+						resolve( data );
 
-					return x.tester.html_to_element( data.html );
+					} else if ( data.__serial_type__ === "element" ) {
 
-				} else if ( data.__serial_type__ === "date" ) {
+						resolve( x.tester.html_to_element( data.html ) );
 
-					return new Date( data.ts );
+					} else if ( data.__serial_type__ === "date" ) {
 
-				} else {
+						resolve( new Date( data.ts ) );
 
-					Object.keys( data ).forEach( function ( key ) {
+					} else if ( data.__serial_type__ === "page_data" ) {
 
-						data[ key ] = x.tester.unserialize( data[ key ] );
+						x.ajax({
 
-					});
+							method: "get_text",
+							url: "pages/" + encodeURIComponent( encodeURIComponent( data.url ) ),
 
-					return data;
+						}).then( function ( text ) {
 
-				};
+							resolve({
+
+								url: data.url,
+								text: text,
+								doc: x.util.html_to_doc( text ),
+
+							});
+
+						});
+
+					} else {
+
+						var total_key_count = Object.keys( data ).length;
+						var unserialized_key_count = 0;
+
+						Object.keys( data ).forEach( function ( key ) {
+
+							x.tester.unserialize( data[ key ] )
+							.then( function ( value ) {
+
+								data[ key ] = value;
+
+								unserialized_key_count += 1;
+
+								if ( unserialized_key_count === total_key_count ) {
+
+									resolve( data );
+
+								};
+
+							});
+
+						});
+
+						if ( Object.keys( data ).length === 0 ) {
+
+							resolve( data );
+
+						};
+
+					};
+
+				});
 
 			},
 
