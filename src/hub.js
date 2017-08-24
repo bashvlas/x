@@ -1,5 +1,5 @@
 
-	window.x.hub = ( function () {
+	window.x.hub = function () {
 		
 		var events = {};
 
@@ -23,7 +23,7 @@
 
 		return {
 
-			trigger: function ( name, data ) {
+			fire: function ( name, data ) {
 				
 				if ( typeof events[ name ] !== 'undefined' ) {
 
@@ -40,7 +40,7 @@
 
 			},
 
-			listen: function ( observers ) {
+			add: function ( observers ) {
 		
 				Object.keys( observers ).forEach( function ( name ) {
 
@@ -84,4 +84,4 @@
 
 		};
 
-	} () );
+	};

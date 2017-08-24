@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":91,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":93,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -233,7 +233,7 @@ window.x.hub = function() {
         events[name] = undefined;
     }
     return {
-        trigger: function(name, data) {
+        fire: function(name, data) {
             if (typeof events[name] !== "undefined") {
                 data = data ? data : {};
                 data.event_name = name;
@@ -242,7 +242,7 @@ window.x.hub = function() {
                 });
             }
         },
-        listen: function(observers) {
+        add: function(observers) {
             Object.keys(observers).forEach(function(name) {
                 add_one(name, observers[name]);
             });
@@ -264,7 +264,7 @@ window.x.hub = function() {
             }
         }
     };
-}();
+};
 
 window.x.tester = function() {
     return {
