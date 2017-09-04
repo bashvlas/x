@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":93,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":95,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -6,6 +6,20 @@
 window.x.util = function() {
     var parser = new DOMParser();
     return {
+        inject_scripts: function(tab_id, script_src_arr) {
+            return new Promise(function(resolve) {
+                var script_src = script_src_arr.splice(0, 1)[0];
+                chrome.tabs.executeScript(tab_id, {
+                    file: script_src
+                }, function() {
+                    if (script_src_arr.length > 0) {
+                        x.util.inject_scripts(tab_id, script_src_arr).then(resolve);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        },
         open_new_tab: function(url) {
             chrome.tabs.create({
                 active: true,
@@ -780,7 +794,7 @@ window.x.bg_api = function() {
     chrome.runtime.onMessage.addListener(function(message, sender, callback) {
         if (message._target === "bg_api") {
             if (api_hash[message.api_name] && api_hash[message.api_name][message.method_name]) {
-                var output = api_hash[message.api_name][message.method_name](message.input);
+                var output = api_hash[message.api_name][message.method_name](message.input, sender);
                 if (output instanceof Promise) {
                     output.then(callback);
                     return true;

@@ -5,6 +5,35 @@
 
 		return {
 
+			inject_scripts: function ( tab_id, script_src_arr ) {
+
+				return new Promise( function ( resolve ) {
+
+					var script_src = script_src_arr.splice( 0, 1 )[ 0 ];
+
+					chrome.tabs.executeScript( tab_id, {
+
+						file: script_src
+
+					}, function () {
+
+						if ( script_src_arr.length > 0 ) {
+
+							x.util.inject_scripts( tab_id, script_src_arr )
+							.then( resolve );
+
+						} else {
+
+							resolve();
+
+						};
+
+					});
+
+				})
+
+			},
+
 			open_new_tab: function ( url ) {
 
 				chrome.tabs.create({ active: true, url: url });

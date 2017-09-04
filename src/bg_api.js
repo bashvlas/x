@@ -15,7 +15,7 @@
 
 				if ( api_hash[ message.api_name ] && api_hash[ message.api_name ][ message.method_name ] ) {
 
-					var output = api_hash[ message.api_name ][ message.method_name ]( message.input );
+					var output = api_hash[ message.api_name ][ message.method_name ]( message.input, sender );
 
 					if ( output instanceof Promise ) {
 
