@@ -4,6 +4,7 @@
 		function detect ( rq ) {
 
 			var root_element = rq.root || document;
+			var target_element = rq.target_element || document;
 			var callback = rq.callback;
 			var method = rq.method || "normal";
 			var selector = rq.selector || "*";
@@ -121,6 +122,16 @@
 
 				});
 				
+			} else if ( method === "detect_attribute_change" ) {
+
+				var observer = new MutationObserver( function ( records ) {
+				
+					callback( target_element, records );
+
+				});
+
+				observer.observe( target_element, { attributes: true } );
+
 			};
 
 		};

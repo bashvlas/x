@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":95,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":98,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -712,6 +712,7 @@ window.x.storage = function() {
 window.x.detect = function() {
     function detect(rq) {
         var root_element = rq.root || document;
+        var target_element = rq.target_element || document;
         var callback = rq.callback;
         var method = rq.method || "normal";
         var selector = rq.selector || "*";
@@ -780,6 +781,13 @@ window.x.detect = function() {
                         subtree: true
                     });
                 }
+            });
+        } else if (method === "detect_attribute_change") {
+            var observer = new MutationObserver(function(records) {
+                callback(target_element, records);
+            });
+            observer.observe(target_element, {
+                attributes: true
             });
         }
     }
