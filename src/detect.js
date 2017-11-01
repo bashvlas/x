@@ -125,12 +125,28 @@
 			} else if ( method === "detect_attribute_change" ) {
 
 				var observer = new MutationObserver( function ( records ) {
-				
+
 					callback( target_element, records );
 
 				});
 
 				observer.observe( target_element, { attributes: true } );
+
+			} else if ( method === "detect_chages" ) {
+
+				var observer = new MutationObserver( function ( records ) {
+
+					callback( target_element, records );
+
+				});
+
+				observer.observe( target_element, {
+
+					attributes: true,
+					childList: true,
+					subtree: true,
+
+				});
 
 			};
 

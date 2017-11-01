@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":98,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":109,"github_url":"https://github.com/bashvlas/x"}*/
 (function() {
     window.x = {};
 })();
@@ -6,19 +6,36 @@
 window.x.util = function() {
     var parser = new DOMParser();
     return {
-        inject_scripts: function(tab_id, script_src_arr) {
+        inject_scripts: function(tab_id, script_src_arr, options) {
             return new Promise(function(resolve) {
                 var script_src = script_src_arr.splice(0, 1)[0];
+                var all_frames = options ? !!options.all_frames : false;
+                var frame_id = options ? options.frame_id || 0 : 0;
                 chrome.tabs.executeScript(tab_id, {
-                    file: script_src
+                    file: script_src,
+                    runAt: "document_start",
+                    allFrames: all_frames,
+                    frameId: frame_id
                 }, function() {
                     if (script_src_arr.length > 0) {
-                        x.util.inject_scripts(tab_id, script_src_arr).then(resolve);
+                        x.util.inject_scripts(tab_id, script_src_arr, options).then(resolve);
                     } else {
                         resolve();
                     }
                 });
             });
+        },
+        inject_styles: function(tab_id, style_url_arr, options) {
+            var all_frames = options ? !!options.all_frames : false;
+            var frame_id = options ? options.frame_id || 0 : 0;
+            for (var i = 0; i < style_url_arr.length; i++) {
+                chrome.tabs.insertCSS(tab_id, {
+                    file: style_url_arr[i],
+                    runAt: "document_start",
+                    allFrames: all_frames,
+                    frameId: frame_id
+                });
+            }
         },
         open_new_tab: function(url) {
             chrome.tabs.create({
@@ -195,7 +212,9 @@ window.x.util = function() {
             if ("createEvent" in document) {
                 var event = document.createEvent("HTMLEvents");
                 event.initEvent(event_name, false, true);
-                element.dispatchEvent(event);
+                element.dispatchEvent(event, {
+                    bubbles: true
+                });
             } else {
                 element.fireEvent("on" + event_name);
             }
@@ -231,6 +250,20 @@ window.x.procedures = function() {
                     });
                 });
             });
+        },
+        allow_iframes: function(url_arr) {
+            chrome.webRequest.onHeadersReceived.addListener(function(details) {
+                for (var i = 0; i < details.responseHeaders.length; ++i) {
+                    if (details.responseHeaders[i].name.toLowerCase() === "x-frame-options") {
+                        details.responseHeaders.splice(i, 1);
+                    }
+                }
+                return {
+                    responseHeaders: details.responseHeaders
+                };
+            }, {
+                urls: url_arr
+            }, [ "blocking", "responseHeaders" ]);
         }
     };
 }();
@@ -788,6 +821,15 @@ window.x.detect = function() {
             });
             observer.observe(target_element, {
                 attributes: true
+            });
+        } else if (method === "detect_chages") {
+            var observer = new MutationObserver(function(records) {
+                callback(target_element, records);
+            });
+            observer.observe(target_element, {
+                attributes: true,
+                childList: true,
+                subtree: true
             });
         }
     }

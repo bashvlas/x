@@ -5,21 +5,26 @@
 
 		return {
 
-			inject_scripts: function ( tab_id, script_src_arr ) {
+			inject_scripts: function ( tab_id, script_src_arr, options ) {
 
 				return new Promise( function ( resolve ) {
 
 					var script_src = script_src_arr.splice( 0, 1 )[ 0 ];
+					var all_frames = options ? !!options.all_frames : false;
+					var frame_id = options ? options.frame_id || 0 : 0;
 
 					chrome.tabs.executeScript( tab_id, {
 
-						file: script_src
+						file: script_src,
+						runAt: "document_start",
+						allFrames: all_frames,
+						frameId: frame_id,
 
 					}, function () {
 
 						if ( script_src_arr.length > 0 ) {
 
-							x.util.inject_scripts( tab_id, script_src_arr )
+							x.util.inject_scripts( tab_id, script_src_arr, options )
 							.then( resolve );
 
 						} else {
@@ -31,6 +36,26 @@
 					});
 
 				})
+
+			},
+
+			inject_styles: function ( tab_id, style_url_arr, options ) {
+
+				var all_frames = options ? !!options.all_frames : false;
+				var frame_id = options ? options.frame_id || 0 : 0;
+
+				for ( var i = 0; i < style_url_arr.length; i++ ) {
+
+					chrome.tabs.insertCSS( tab_id, {
+
+						file: style_url_arr[ i ],
+						runAt: "document_start",
+						allFrames: all_frames,
+						frameId: frame_id,
+
+					});	
+
+				};
 
 			},
 
@@ -363,7 +388,7 @@
 
 					var event = document.createEvent( "HTMLEvents" );
 					event.initEvent( event_name, false, true );
-					element.dispatchEvent( event );
+					element.dispatchEvent( event, { bubbles: true });
 
 				} else {
 
@@ -429,6 +454,26 @@
 				});
 
 			},
+
+			allow_iframes: function ( url_arr ) {
+
+				chrome.webRequest.onHeadersReceived.addListener( function ( details ) {
+
+					for ( var i = 0; i < details.responseHeaders.length; ++i ) {
+
+						if ( details.responseHeaders[i].name.toLowerCase() === 'x-frame-options' ) {
+
+							details.responseHeaders.splice( i, 1 );
+
+						};
+
+					};
+
+					return { responseHeaders: details.responseHeaders };
+
+				}, { urls: url_arr }, [ 'blocking', 'responseHeaders' ] );
+
+			}
 
 		};
 
