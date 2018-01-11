@@ -434,23 +434,6 @@
 					method: "get_json",
 					url: chrome.extension.getURL( "/config.json" ),
 
-				})
-				.then( function ( config ) {
-
-					return new Promise( function ( resolve ) {
-
-						chrome.storage.local.set({
-
-							config: config,
-
-						}, function () {
-
-							resolve( config );
-
-						})
-
-					});
-
 				});
 
 			},
@@ -472,6 +455,25 @@
 					return { responseHeaders: details.responseHeaders };
 
 				}, { urls: url_arr }, [ 'blocking', 'responseHeaders' ] );
+
+			},
+
+			clear_all_cookies: function ( url ) {
+
+				chrome.cookies.getAll( { url: url }, ( cookie_arr ) => {
+
+					cookie_arr.forEach( ( cookie ) => {
+
+						chrome.cookies.remove({ 
+
+							url: url,
+							name: cookie.name,
+
+						});
+
+					});
+
+				});
 
 			}
 
