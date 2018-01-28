@@ -132,7 +132,7 @@
 
 				observer.observe( target_element, { attributes: true } );
 
-			} else if ( method === "detect_chages" ) {
+			} else if ( method === "detect_changes" ) {
 
 				var observer = new MutationObserver( function ( records ) {
 
