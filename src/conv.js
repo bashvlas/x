@@ -1,5 +1,9 @@
-	
-	window.x.conv = ( function () {
+
+	window[ window.webextension_library_name ].conv = ( function () {
+
+		// define x
+
+			var x = window[ window.webextension_library_name ];
 
 		// vars
 

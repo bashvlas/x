@@ -1,5 +1,5 @@
 
-	window.x.hub = function () {
+	window[ window.webextension_library_name ].hub = function () {
 		
 		var events = {};
 
@@ -79,6 +79,62 @@
 					});		
 
 				};
+
+			},
+
+			add_window_observers: function ( window, context, sender, observers ) {
+
+				window.addEventListener( "message", function ( event ) {
+
+					if ( event.data && event.data.context === context ) {
+
+						var name = event.data.name;
+						var data = event.data.data;
+
+						if ( event.data.sender === sender ) {
+
+							if ( observers[ "all" ] ) {
+
+								observers[ "all" ]( data, event );
+
+							};
+
+							if ( observers[ name ] ) {
+
+								observers[ name ]( data, event );
+
+							};
+
+						};
+
+					};
+
+				});
+
+			},
+
+			find_and_add_event_listeners: function ( element ) {
+
+				var _this = this;
+
+				$( element ).on( "click", "[data-onclick]", function ( event ) {
+
+					_this.fire( event.currentTarget.dataset.onclick, event );
+
+				});
+
+			},
+
+			message_window: function ( window, context, sender, name, data ) {
+
+				window.postMessage({
+
+					context: context,
+					sender: sender,
+					name: name,
+					data: data,
+
+				}, "*" );
 
 			},
 

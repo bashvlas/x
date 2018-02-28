@@ -1,5 +1,7 @@
 
-	window.x.ajax = ( function () {
+	window[ window.webextension_library_name ].ajax = ( function () {
+
+		var x = window[ window.webextension_library_name ];
 
 		function open_window_with_post_data ( url, data ) {
 

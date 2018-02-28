@@ -1,6 +1,7 @@
 
-	( function () {
+	( function ( global_name ) {
 
-		window.x = {};
+		window.webextension_library_name = global_name;
+		window[ global_name ] = {};
 
-	} () );
+	} ( "webextension_library" ) );

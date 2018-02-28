@@ -1,5 +1,5 @@
 
-	window.x.bg_api = ( function () {
+	window[ window.webextension_library_name ].bg_api = ( function () {
 
 		if ( typeof chrome.extension === "undefined" ) {
 

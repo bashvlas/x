@@ -1,5 +1,5 @@
 
-	window.x.query = ( function () {
+	window[ window.webextension_library_name ].query = ( function () {
 
 		return {
 

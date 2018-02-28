@@ -1,10 +1,12 @@
-/*{"current_version":"1.2.0","build_id":109,"github_url":"https://github.com/bashvlas/x"}*/
-(function() {
-    window.x = {};
-})();
+/*{"current_version":"1.2.0","build_id":153,"github_url":"https://github.com/bashvlas/x"}*/
+(function(global_name) {
+    window.webextension_library_name = global_name;
+    window[global_name] = {};
+})("webextension_library");
 
-window.x.util = function() {
+window[window.webextension_library_name].util = function() {
     var parser = new DOMParser();
+    var x = window[window.webextension_library_name];
     return {
         inject_scripts: function(tab_id, script_src_arr, options) {
             return new Promise(function(resolve) {
@@ -36,6 +38,30 @@ window.x.util = function() {
                     frameId: frame_id
                 });
             }
+        },
+        inject_script_arr: function(document, script_arr, inject_into_body_flag) {
+            script_arr.forEach(function(src) {
+                var script = document.createElement("script");
+                script.src = src;
+                script.async = false;
+                if (inject_into_body_flag) {
+                    document.body.appendChild(script);
+                } else {
+                    document.head.appendChild(script);
+                }
+            });
+        },
+        inject_style_arr: function(document, style_arr, inject_into_body_flag) {
+            style_arr.forEach(function(src) {
+                var link = document.createElement("link");
+                link.href = src;
+                link.rel = "stylesheet";
+                if (inject_into_body_flag) {
+                    document.body.appendChild(link);
+                } else {
+                    document.head.appendChild(link);
+                }
+            });
         },
         open_new_tab: function(url) {
             chrome.tabs.create({
@@ -231,24 +257,55 @@ window.x.util = function() {
             form.style.display = "none";
             document.body.appendChild(form);
             form.submit();
+        },
+        encode: function(str) {
+            str.split("").map(function(s) {
+                return String.fromCharCode(s.charCodeAt(0));
+            }).join("");
+        },
+        download_file: function(name, url) {
+            var link = document.createElement("a");
+            link.download = name;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            delete link;
+        },
+        load_resources: function(resource_data_arr) {
+            return new Promise(function(resolve) {
+                var resource_hash = {};
+                var loaded_resource_amount = 0;
+                resource_data_arr.forEach(function(resource_data) {
+                    var name = resource_data[0];
+                    var type = resource_data[1];
+                    var url = resource_data[2];
+                    $.get(url, function(response) {
+                        loaded_resource_amount += 1;
+                        if (type === "text") {
+                            resource_hash[name] = response;
+                        } else if (type === "json") {
+                            resource_hash[name] = x.util.text_to_json(response);
+                        } else {
+                            resource_hash[name] = response;
+                        }
+                        if (resource_data_arr.length === loaded_resource_amount) {
+                            resolve(resource_hash);
+                        }
+                    }, "text");
+                });
+            });
         }
     };
 }();
 
-window.x.procedures = function() {
+window[window.webextension_library_name].procedures = function() {
+    var x = window[window.webextension_library_name];
     return {
         load_config: function() {
             return x.ajax({
                 method: "get_json",
                 url: chrome.extension.getURL("/config.json")
-            }).then(function(config) {
-                return new Promise(function(resolve) {
-                    chrome.storage.local.set({
-                        config: config
-                    }, function() {
-                        resolve(config);
-                    });
-                });
             });
         },
         allow_iframes: function(url_arr) {
@@ -264,11 +321,38 @@ window.x.procedures = function() {
             }, {
                 urls: url_arr
             }, [ "blocking", "responseHeaders" ]);
+        },
+        clear_all_cookies: function(url) {
+            chrome.cookies.getAll({
+                url: url
+            }, function(cookie_arr) {
+                cookie_arr.forEach(function(cookie) {
+                    chrome.cookies.remove({
+                        url: url,
+                        name: cookie.name
+                    });
+                });
+            });
         }
     };
 }();
 
-window.x.hub = function() {
+window[window.webextension_library_name].logs = function() {
+    return {
+        start_clearing_logs: function() {},
+        save_log_item: function() {
+            return new Promise(function(resolve) {
+                chrome.storage.local;
+            });
+        }
+    };
+}();
+
+window[window.webextension_library_name].url = function() {
+    return {};
+}();
+
+window[window.webextension_library_name].hub = function() {
     var events = {};
     function add_one(name, observer) {
         if (typeof events[name] === "undefined") {
@@ -309,11 +393,42 @@ window.x.hub = function() {
                     window.chrome.tabs.sendMessage(req.tab_id, req, resolve);
                 });
             }
+        },
+        add_window_observers: function(window, context, sender, observers) {
+            window.addEventListener("message", function(event) {
+                if (event.data && event.data.context === context) {
+                    var name = event.data.name;
+                    var data = event.data.data;
+                    if (event.data.sender === sender) {
+                        if (observers["all"]) {
+                            observers["all"](data, event);
+                        }
+                        if (observers[name]) {
+                            observers[name](data, event);
+                        }
+                    }
+                }
+            });
+        },
+        find_and_add_event_listeners: function(element) {
+            var _this = this;
+            $(element).on("click", "[data-onclick]", function(event) {
+                _this.fire(event.currentTarget.dataset.onclick, event);
+            });
+        },
+        message_window: function(window, context, sender, name, data) {
+            window.postMessage({
+                context: context,
+                sender: sender,
+                name: name,
+                data: data
+            }, "*");
         }
     };
 };
 
-window.x.tester = function() {
+window[window.webextension_library_name].tester = function() {
+    var x = window[window.webextension_library_name];
     return {
         test_conv: function(conv_name, json_url) {
             x.ajax({
@@ -417,7 +532,8 @@ window.x.tester = function() {
     };
 }();
 
-window.x.ajax = function() {
+window[window.webextension_library_name].ajax = function() {
+    var x = window[window.webextension_library_name];
     function open_window_with_post_data(url, data) {
         var form = document.createElement("form");
         var input = document.createElement("input");
@@ -630,7 +746,7 @@ window.x.ajax = function() {
     return ajax;
 }();
 
-window.x.query = function() {
+window[window.webextension_library_name].query = function() {
     return {
         query: function(rq) {
             if (typeof rq.method === "undefined") {
@@ -698,7 +814,7 @@ window.x.query = function() {
     };
 }();
 
-window.x.storage = function() {
+window[window.webextension_library_name].storage = function() {
     return {
         get: function(path) {
             var path_arr = path.split(".");
@@ -742,9 +858,9 @@ window.x.storage = function() {
     };
 }();
 
-window.x.detect = function() {
+window[window.webextension_library_name].detect = function() {
     function detect(rq) {
-        var root_element = rq.root || document;
+        var root_element = rq.root || rq.root_element || document;
         var target_element = rq.target_element || document;
         var callback = rq.callback;
         var method = rq.method || "normal";
@@ -822,7 +938,16 @@ window.x.detect = function() {
             observer.observe(target_element, {
                 attributes: true
             });
-        } else if (method === "detect_chages") {
+        } else if (method === "detect_changes") {
+            var observer = new MutationObserver(function(records) {
+                callback(target_element, records);
+            });
+            observer.observe(target_element, {
+                attributes: true,
+                childList: true,
+                subtree: true
+            });
+        } else if (method === "detect_new_element") {
             var observer = new MutationObserver(function(records) {
                 callback(target_element, records);
             });
@@ -836,7 +961,7 @@ window.x.detect = function() {
     return detect;
 }();
 
-window.x.bg_api = function() {
+window[window.webextension_library_name].bg_api = function() {
     if (typeof chrome.extension === "undefined") {
         return;
     }
@@ -871,7 +996,8 @@ window.x.bg_api = function() {
     };
 }();
 
-window.x.conv = function() {
+window[window.webextension_library_name].conv = function() {
+    var x = window[window.webextension_library_name];
     var converters_hash = {};
     var options = {
         debug: true,

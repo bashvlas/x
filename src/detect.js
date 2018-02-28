@@ -1,9 +1,9 @@
 
-	window.x.detect = ( function () {
+	window[ window.webextension_library_name ].detect = ( function () {
 
 		function detect ( rq ) {
 
-			var root_element = rq.root || document;
+			var root_element = rq.root || rq.root_element || document;
 			var target_element = rq.target_element || document;
 			var callback = rq.callback;
 			var method = rq.method || "normal";
@@ -121,7 +121,7 @@
 					};
 
 				});
-				
+
 			} else if ( method === "detect_attribute_change" ) {
 
 				var observer = new MutationObserver( function ( records ) {
@@ -133,6 +133,22 @@
 				observer.observe( target_element, { attributes: true } );
 
 			} else if ( method === "detect_changes" ) {
+
+				var observer = new MutationObserver( function ( records ) {
+
+					callback( target_element, records );
+
+				});
+
+				observer.observe( target_element, {
+
+					attributes: true,
+					childList: true,
+					subtree: true,
+
+				});
+
+			} else if ( method === "detect_new_element" ) {
 
 				var observer = new MutationObserver( function ( records ) {
 

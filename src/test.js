@@ -1,5 +1,7 @@
 
-	window.x.tester = ( function () {
+	window[ window.webextension_library_name ].tester = ( function () {
+
+		var x = window[ window.webextension_library_name ];
 
 		return {
 

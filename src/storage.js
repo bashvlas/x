@@ -1,5 +1,5 @@
 
-	window.x.storage = ( function () {
+	window[ window.webextension_library_name ].storage = ( function () {
 
 		return {
 

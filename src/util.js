@@ -1,7 +1,8 @@
 
-	window.x.util = ( function () {
+	window[ window.webextension_library_name ].util = ( function () {
 
 		var parser = new DOMParser();
+		var x = window[ window.webextension_library_name ];
 
 		return {
 
@@ -56,6 +57,50 @@
 					});	
 
 				};
+
+			},
+
+			inject_script_arr: function ( document, script_arr, inject_into_body_flag ) {
+
+				script_arr.forEach( function ( src ) {
+
+					var script = document.createElement('script');
+					script.src = src;
+					script.async = false;
+
+					if ( inject_into_body_flag ) {
+
+						document.body.appendChild( script );
+						
+					} else {
+
+						document.head.appendChild( script );
+
+					};
+
+				});
+
+			},
+
+			inject_style_arr: function ( document, style_arr, inject_into_body_flag ) {
+
+				style_arr.forEach( function ( src ) {
+
+					var link = document.createElement( 'link' );
+					link.href = src;
+					link.rel = "stylesheet";
+
+					if ( inject_into_body_flag ) {
+
+						document.body.appendChild( link );
+						
+					} else {
+
+						document.head.appendChild( link );
+
+					};
+
+				});
 
 			},
 
@@ -419,11 +464,76 @@
 
 			},
 
+			encode: function ( str ) {
+
+				str.split( "" ).map( function ( s ) { return String.fromCharCode( s.charCodeAt( 0 ) ) } ).join( "" )
+
+			},
+
+			download_file: function ( name, url ) {
+
+				var link = document.createElement( "a" );
+				link.download = name;
+				link.href = url;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				delete link;
+
+			},
+
+			load_resources: function ( resource_data_arr ) {
+
+				return new Promise( function ( resolve ) {
+
+					var resource_hash = {};
+					var loaded_resource_amount = 0;
+
+					resource_data_arr.forEach( function ( resource_data ) {
+
+						var name = resource_data[ 0 ];
+						var type = resource_data[ 1 ];
+						var url = resource_data[ 2 ];
+
+						$.get( url, function ( response ) {
+
+							loaded_resource_amount += 1;
+
+							if ( type === "text" ) {
+
+								resource_hash[ name ] = response;
+
+							} else if ( type === "json" ) {
+
+								resource_hash[ name ] = x.util.text_to_json( response );
+
+							} else {
+
+								resource_hash[ name ] = response;
+
+							};
+
+							if ( resource_data_arr.length === loaded_resource_amount ) {
+
+								resolve( resource_hash );
+
+							};
+
+						}, "text" );
+
+					});
+
+				});
+
+			}
+
 		};
 
 	} () );
 
-	window.x.procedures = ( function () {
+	window[ window.webextension_library_name ].procedures = ( function () {
+
+		var x = window[ window.webextension_library_name ];
 
 		return {
 
@@ -460,9 +570,9 @@
 
 			clear_all_cookies: function ( url ) {
 
-				chrome.cookies.getAll( { url: url }, ( cookie_arr ) => {
+				chrome.cookies.getAll( { url: url }, function ( cookie_arr ) {
 
-					cookie_arr.forEach( ( cookie ) => {
+					cookie_arr.forEach( function ( cookie ) {
 
 						chrome.cookies.remove({ 
 
@@ -477,6 +587,35 @@
 
 			}
 
+		};
+
+	} () );
+
+	window[ window.webextension_library_name ].logs = ( function () {
+
+		return {
+
+			start_clearing_logs: function () {
+
+			},
+
+			save_log_item: function () {
+
+				return new Promise( function ( resolve ) {
+
+					chrome.storage.local
+
+				});
+
+			},
+
+		};
+
+	} () );
+
+	window[ window.webextension_library_name ].url = ( function () {
+
+		return {
 		};
 
 	} () );
