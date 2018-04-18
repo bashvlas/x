@@ -1,13 +1,22 @@
 
 	window[ window.webextension_library_name ].detect = ( function () {
 
+		var detector_counter = 0;
+
 		function detect ( rq ) {
 
-			var root_element = rq.root || rq.root_element || document;
-			var target_element = rq.target_element || document;
-			var callback = rq.callback;
-			var method = rq.method || "normal";
-			var selector = rq.selector || "*";
+			// init
+
+				var root_element = rq.root || rq.root_element || document;
+				var target_element = rq.target_element || document;
+				var callback = rq.callback;
+				var method = rq.method || "normal";
+				var selector = rq.selector || "*";
+				var detector_id = detector_counter;
+
+			// increase the counter
+
+				detector_counter += 1;
 
 			if ( method === "normal" ) {
 
@@ -17,9 +26,9 @@
 
 				for ( var i = 0; i < element_arr.length; i++ ) {
 
-					if ( element_arr[ i ].dataset.detected !== "1" ) {
+					if ( element_arr[ i ].dataset[ "detected_" + detector_id ] !== "1" ) {
 
-						element_arr[ i ].dataset.detected = "1";
+						element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 						callback( element_arr[ i ] );
 						
 					};
@@ -34,9 +43,9 @@
 
 						for ( var i = 0; i < element_arr.length; i++ ) {
 
-							if ( element_arr[ i ].dataset.detected !== "1" ) {
+							if ( element_arr[ i ].dataset[ "detected_" + detector_id ] !== "1" ) {
 
-								element_arr[ i ].dataset.detected = "1";
+								element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 								callback( element_arr[ i ] );
 								
 							};

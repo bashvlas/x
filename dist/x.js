@@ -1,4 +1,4 @@
-/*{"current_version":"1.2.0","build_id":153,"github_url":"https://github.com/bashvlas/x"}*/
+/*{"current_version":"1.2.0","build_id":177,"github_url":"https://github.com/bashvlas/x"}*/
 (function(global_name) {
     window.webextension_library_name = global_name;
     window[global_name] = {};
@@ -280,6 +280,9 @@ window[window.webextension_library_name].util = function() {
                     var name = resource_data[0];
                     var type = resource_data[1];
                     var url = resource_data[2];
+                    if (url.indexOf("local") === 0) {
+                        url = chrome.extension.getURL(url.replace("local", ""));
+                    }
                     $.get(url, function(response) {
                         loaded_resource_amount += 1;
                         if (type === "text") {
@@ -352,16 +355,34 @@ window[window.webextension_library_name].url = function() {
     return {};
 }();
 
-window[window.webextension_library_name].hub = function() {
+window[window.webextension_library_name].hub = function(mode) {
     var events = {};
+    var complex_events = {};
     function add_one(name, observer) {
         if (typeof events[name] === "undefined") {
             events[name] = [];
         }
         events[name].push(observer);
     }
+    function add_one_observer(observers_name, name, observer) {
+        if (typeof complex_events[name] === "undefined") {
+            complex_events[name] = [];
+        }
+        complex_events[name].push({
+            observers_name: observers_name,
+            observer_fn: observer
+        });
+    }
     function remove(name) {
         events[name] = undefined;
+    }
+    function log_event(source, listener, name, data) {
+        if (mode === "prod") {} else if (mode === "dev") {
+            var title = "%c " + source + ": " + name + " => " + listener;
+            console.groupCollapsed(title, "color: blue");
+            console.log(data);
+            console.groupEnd();
+        }
     }
     return {
         fire: function(name, data) {
@@ -369,13 +390,27 @@ window[window.webextension_library_name].hub = function() {
                 data = data ? data : {};
                 data.event_name = name;
                 events[name].forEach(function(observer) {
+                    log_event("hub", "listener", name, data);
                     observer(data);
+                });
+            }
+            if (typeof complex_events[name] !== "undefined") {
+                data = data ? data : {};
+                data.event_name = name;
+                complex_events[name].forEach(function(observer) {
+                    log_event("hub", observer.observers_name, name, data);
+                    observer.observer_fn(data);
                 });
             }
         },
         add: function(observers) {
             Object.keys(observers).forEach(function(name) {
                 add_one(name, observers[name]);
+            });
+        },
+        add_observers: function(observers_name, observers) {
+            Object.keys(observers).forEach(function(name) {
+                add_one_observer(observers_name, name, observers[name]);
             });
         },
         send_runtime_message_rq_to_rs: function(rq) {
@@ -401,11 +436,29 @@ window[window.webextension_library_name].hub = function() {
                     var data = event.data.data;
                     if (event.data.sender === sender) {
                         if (observers["all"]) {
+                            log_event("window", context + " " + sender, name, data);
                             observers["all"](data, event);
                         }
                         if (observers[name]) {
+                            log_event("window", context + " " + sender, name, data);
                             observers[name](data, event);
                         }
+                    }
+                }
+            });
+        },
+        add_runtime_observers: function(observers_name, observers) {
+            chrome.runtime.onMessage.addListener(function(message, sender, callback) {
+                if (message && message.name) {
+                    var name = message.name;
+                    var data = message.data;
+                    if (observers["all"]) {
+                        log_event("runtime", observers_name, name, data);
+                        observers["all"](data, sender, callback);
+                    }
+                    if (observers[name]) {
+                        log_event("runtime", observers_name, name, data);
+                        observers[name](data, sender, callback);
                     }
                 }
             });
@@ -423,6 +476,33 @@ window[window.webextension_library_name].hub = function() {
                 name: name,
                 data: data
             }, "*");
+        },
+        send_to_active_tab: function(name, data, callback) {
+            if (mode === "dev") {
+                var title = "%c " + "OUT" + ": " + name;
+                console.groupCollapsed(title, "color: brown");
+                console.log(data);
+                console.groupEnd();
+            }
+            chrome.tabs.query({
+                active: true,
+                currentWindow: true
+            }, function(tab_arr) {
+                chrome.tabs.sendMessage(tab_arr[0].id, {
+                    name: name,
+                    data: data
+                }, function(response) {
+                    if (mode === "dev") {
+                        var title = "%c " + "OUT RESPONSE" + ": " + name;
+                        console.groupCollapsed(title, "color: brown");
+                        console.log(response);
+                        console.groupEnd();
+                    }
+                    if (callback) {
+                        callback(response);
+                    }
+                });
+            });
         }
     };
 };
@@ -859,18 +939,21 @@ window[window.webextension_library_name].storage = function() {
 }();
 
 window[window.webextension_library_name].detect = function() {
+    var detector_counter = 0;
     function detect(rq) {
         var root_element = rq.root || rq.root_element || document;
         var target_element = rq.target_element || document;
         var callback = rq.callback;
         var method = rq.method || "normal";
         var selector = rq.selector || "*";
+        var detector_id = detector_counter;
+        detector_counter += 1;
         if (method === "normal") {
             root_element = root_element || document;
             var element_arr = root_element.querySelectorAll(selector);
             for (var i = 0; i < element_arr.length; i++) {
-                if (element_arr[i].dataset.detected !== "1") {
-                    element_arr[i].dataset.detected = "1";
+                if (element_arr[i].dataset["detected_" + detector_id] !== "1") {
+                    element_arr[i].dataset["detected_" + detector_id] = "1";
                     callback(element_arr[i]);
                 }
             }
@@ -878,8 +961,8 @@ window[window.webextension_library_name].detect = function() {
                 var element_arr = root_element.querySelectorAll(selector);
                 if (element_arr) {
                     for (var i = 0; i < element_arr.length; i++) {
-                        if (element_arr[i].dataset.detected !== "1") {
-                            element_arr[i].dataset.detected = "1";
+                        if (element_arr[i].dataset["detected_" + detector_id] !== "1") {
+                            element_arr[i].dataset["detected_" + detector_id] = "1";
                             callback(element_arr[i]);
                         }
                     }
@@ -1000,7 +1083,7 @@ window[window.webextension_library_name].conv = function() {
     var x = window[window.webextension_library_name];
     var converters_hash = {};
     var options = {
-        debug: true,
+        mode: "prod",
         silence: []
     };
     var conv_data_arr = [];
@@ -1073,14 +1156,14 @@ window[window.webextension_library_name].conv = function() {
         return conv;
     }();
     function conv(namespace, from_name, to_name, input) {
-        if (options.debug) {
+        if (options.mode === "dev") {
             var conv_data = conv_with_data(namespace, from_name, to_name, input);
             if (options.silence && options.silence.indexOf(from_name + "_to_" + to_name) === -1) {
                 x.conv.log_conv_data(conv_data);
                 conv_data_arr.push(conv_data);
             }
             return conv_data.output;
-        } else {
+        } else if (options.mode === "prod") {
             return conv_no_data(namespace, from_name, to_name, input);
         }
         var fn = converters_hash[namespace][from_name + "_to_" + to_name];

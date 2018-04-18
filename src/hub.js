@@ -1,7 +1,8 @@
 
-	window[ window.webextension_library_name ].hub = function () {
+	window[ window.webextension_library_name ].hub = function ( mode ) {
 		
 		var events = {};
+		var complex_events = {};
 
 		function add_one ( name, observer ) {
 		
@@ -10,14 +11,50 @@
 				events[ name ] = [];
 
 			}
-			
+
 			events[ name ].push( observer );
+		
+		};
+
+
+		function add_one_observer ( observers_name, name, observer ) {
+		
+			if ( typeof complex_events[ name ] === 'undefined' ) {
+			
+				complex_events[ name ] = [];
+
+			}
+
+			complex_events[ name ].push({
+
+				observers_name: observers_name,
+				observer_fn: observer,
+
+			});
 		
 		};
 
 		function remove ( name ) {
 
 			events[ name ] = undefined;
+
+		};
+
+		function log_event ( source, listener, name, data ) {
+
+			if ( mode === "prod" ) {
+
+				// don't log events in production
+
+			} else if ( mode === "dev" ) {
+
+				var title = "%c " + source + ": " + name + " => " + listener;
+
+				console.groupCollapsed( title, "color: blue" );
+				console.log( data );
+				console.groupEnd();
+
+			};
 
 		};
 
@@ -29,10 +66,25 @@
 
 					data = data ? data : {};
 					data.event_name = name;
-					
+
 					events[ name ].forEach( function ( observer ) {
-					
+
+						log_event( "hub", "listener", name, data );
 						observer( data );
+					
+					});
+				
+				};
+				
+				if ( typeof complex_events[ name ] !== 'undefined' ) {
+
+					data = data ? data : {};
+					data.event_name = name;
+					
+					complex_events[ name ].forEach( function ( observer ) {
+
+						log_event( "hub", observer.observers_name, name, data );
+						observer.observer_fn( data );
 					
 					});
 				
@@ -45,6 +97,16 @@
 				Object.keys( observers ).forEach( function ( name ) {
 
 					add_one( name, observers[ name ] );
+
+				});
+
+			},
+
+			add_observers: function ( observers_name, observers ) {
+		
+				Object.keys( observers ).forEach( function ( name ) {
+
+					add_one_observer( observers_name, name, observers[ name ] );
 
 				});
 
@@ -95,15 +157,46 @@
 
 							if ( observers[ "all" ] ) {
 
+								log_event( "window", context + " " + sender, name, data );
 								observers[ "all" ]( data, event );
 
 							};
 
 							if ( observers[ name ] ) {
 
+								log_event( "window", context + " " + sender, name, data );
 								observers[ name ]( data, event );
 
 							};
+
+						};
+
+					};
+
+				});
+
+			},
+
+			add_runtime_observers: function ( observers_name, observers ) {
+
+				chrome.runtime.onMessage.addListener( function ( message, sender, callback ) {
+
+					if ( message && message.name ) {
+
+						var name = message.name;
+						var data = message.data;
+
+						if ( observers[ "all" ] ) {
+
+							log_event( "runtime", observers_name, name, data );
+							observers[ "all" ]( data, sender, callback );
+
+						};
+
+						if ( observers[ name ] ) {
+
+							log_event( "runtime", observers_name, name, data );
+							observers[ name ]( data, sender, callback );
 
 						};
 
@@ -137,6 +230,49 @@
 				}, "*" );
 
 			},
+
+			send_to_active_tab: function ( name, data, callback ) {
+
+				if ( mode === "dev" ) {
+
+					var title = "%c " + "OUT" + ": " + name;
+
+					console.groupCollapsed( title, "color: brown" );
+					console.log( data );
+					console.groupEnd();
+
+				};
+
+				chrome.tabs.query( { active: true, currentWindow: true }, function ( tab_arr ) {
+
+					chrome.tabs.sendMessage( tab_arr[ 0 ].id, {
+
+						name: name,
+						data: data,
+
+					}, function ( response ) {
+
+						if ( mode === "dev" ) {
+
+							var title = "%c " + "OUT RESPONSE" + ": " + name;
+
+							console.groupCollapsed( title, "color: brown" );
+							console.log( response );
+							console.groupEnd();
+
+						};	
+
+						if ( callback ) {
+
+							callback( response );
+							
+						};
+
+					});
+
+				});
+
+			}
 
 		};
 

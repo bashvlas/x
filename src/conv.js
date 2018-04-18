@@ -10,7 +10,7 @@
 			var converters_hash = {};
 			var options = {
 
-				debug: true,
+				mode: "prod",
 				silence: [],
 
 			};
@@ -153,7 +153,7 @@
 
 			function conv ( namespace, from_name, to_name, input ) {
 
-				if ( options.debug ) {
+				if ( options.mode === "dev" ) {
 
 					var conv_data = conv_with_data( namespace, from_name, to_name, input );
 
@@ -166,7 +166,7 @@
 
 					return conv_data.output;
 
-				} else {
+				} else if ( options.mode === "prod" ) {
 
 					return conv_no_data( namespace, from_name, to_name, input );
 

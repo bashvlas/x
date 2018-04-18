@@ -495,6 +495,12 @@
 						var type = resource_data[ 1 ];
 						var url = resource_data[ 2 ];
 
+						if ( url.indexOf( "local" ) === 0 ) {
+
+							url = chrome.extension.getURL( url.replace( "local", "" ) );
+
+						};
+
 						$.get( url, function ( response ) {
 
 							loaded_resource_amount += 1;
