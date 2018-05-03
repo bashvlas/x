@@ -48,7 +48,7 @@
 
 			} else if ( mode === "dev" ) {
 
-				var title = "%c " + source + ": " + name + " => " + listener;
+				var title = "%c " + listener + " ( " + source + " )" + ": " + name;
 
 				console.groupCollapsed( title, "color: blue" );
 				console.log( data );
@@ -273,6 +273,24 @@
 				});
 
 			}
+
+		};
+
+	};
+
+	window[ window.webextension_library_name ].log = function ( mode ) {
+
+		var state = {};
+
+		state.mode = mode;		
+
+		return function ( text ) {
+
+			if ( state.mode === "dev" ) {
+
+				console.log( text );
+
+			};
 
 		};
 
