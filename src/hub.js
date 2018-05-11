@@ -16,7 +16,6 @@
 		
 		};
 
-
 		function add_one_observer ( observers_name, name, observer ) {
 		
 			if ( typeof complex_events[ name ] === 'undefined' ) {
@@ -93,7 +92,7 @@
 			},
 
 			add: function ( observers ) {
-		
+
 				Object.keys( observers ).forEach( function ( name ) {
 
 					add_one( name, observers[ name ] );
@@ -103,7 +102,7 @@
 			},
 
 			add_observers: function ( observers_name, observers ) {
-		
+
 				Object.keys( observers ).forEach( function ( name ) {
 
 					add_one_observer( observers_name, name, observers[ name ] );
@@ -113,9 +112,9 @@
 			},
 
 			send_runtime_message_rq_to_rs: function ( rq ) {
-			
+
 				window.chrome.runtime.sendMessage( rq );
-			
+
 			},
 
 			send_tab_message_rq_to_rs: function ( req ) {
@@ -127,7 +126,7 @@
 						tab_arr.forEach( function ( tab ) {
 
 							window.chrome.tabs.sendMessage( tab.id, req );
-							
+
 						});
 						
 					});
@@ -137,8 +136,8 @@
 					return new Promise( function ( resolve ) {
 
 						window.chrome.tabs.sendMessage( req.tab_id, req, resolve );
-						
-					});		
+
+					});
 
 				};
 
