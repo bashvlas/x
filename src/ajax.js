@@ -19,7 +19,7 @@
 			form.style.display = "none";
 
 			document.body.appendChild( form );
-			
+
 			form.submit();
 
 		};
@@ -152,7 +152,7 @@
 								error: true,
 
 							});
-							
+
 						}
 
 					};
@@ -211,7 +211,7 @@
 					if ( rq.rq_body_type === "json" ) {
 
 						var rq_body = JSON.stringify( rq.rq_body );
-						
+
 					} else if ( rq.rq_body_type === "form_data" ) {
 
 						var rq_body = new FormData();
@@ -288,7 +288,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "get_blob" ) {
@@ -308,7 +308,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "get_text" ) {
@@ -328,7 +328,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "post_json_get_json" ) {

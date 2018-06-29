@@ -54,7 +54,7 @@
 						allFrames: all_frames,
 						frameId: frame_id,
 
-					});	
+					});
 
 				};
 
@@ -71,7 +71,7 @@
 					if ( inject_into_body_flag ) {
 
 						document.body.appendChild( script );
-						
+
 					} else {
 
 						document.head.appendChild( script );
@@ -93,7 +93,7 @@
 					if ( inject_into_body_flag ) {
 
 						document.body.appendChild( link );
-						
+
 					} else {
 
 						document.head.appendChild( link );
@@ -162,10 +162,13 @@
 				var selector = rq[ 1 ];
 				var val_type = rq[ 2 ];
 				var detail = rq[ 3 ];
+				var modifier_arr = rq[ 4 ];
+
+				var output = null;
 
 				if ( val_type === "length" ) {
 
-					return doc.querySelectorAll( selector ).length;
+					output = doc.querySelectorAll( selector ).length;
 
 				} else {
 
@@ -175,33 +178,57 @@
 
 						if ( val_type === "text" ) {
 
-							return element.innerText;
+							output = element.innerText;
 
 						} else if ( val_type === "html" ) {
 
-							return element.innerHTML;
+							output = element.innerHTML;
 
 						} else if ( val_type === "attr" ) {
 
-							return element.getAttribute( detail );
+							output = element.getAttribute( detail );
 
 						} else if ( val_type === "value" ) {
 
-							return element.value;
+							output = element.value;
 
 						} else {
 
-							return null;
+							output = null;
 
 						}
 
 					} else {
 
-						return null;
+						output = null;
 
 					};
 
 				};
+
+				if ( modifier_arr ) {
+
+					for ( var i = 0; i < modifier_arr.length; i++ ) {
+
+						if ( modifier_arr[ i ] === "trim" ) {
+
+							if ( typeof output === "string" && output.trim ) {
+
+								output = output.trim();
+
+							};
+
+						} else if ( modifier_arr[ i ] === "bool" ) {
+
+							output = !!output;
+
+						};
+
+					};
+
+				};
+
+				return output;
 
 			},
 
@@ -290,7 +317,7 @@
 						var match_bool = true;
 						var q_key_arr = Object.keys( rq.q || {} );
 						var nq_key_arr = Object.keys( rq.nq || {} );
-						
+
 						for ( var j = q_key_arr.length; j--; ) {
 
 							if ( item[ q_key_arr[ j ] ] !== rq.q[ q_key_arr[ j ] ] ) {
@@ -300,7 +327,7 @@
 							};
 
 						};
-						
+
 						for ( var j = nq_key_arr.length; j--; ) {
 
 							if ( item[ nq_key_arr[ j ] ] === rq.q[ nq_key_arr[ j ] ] ) {
@@ -329,7 +356,7 @@
 						var match_bool = true;
 						var q_key_arr = Object.keys( rq.q || {} );
 						var nq_key_arr = Object.keys( rq.nq || {} );
-						
+
 						for ( var j = q_key_arr.length; j--; ) {
 
 							if ( item[ q_key_arr[ j ] ] !== rq.q[ q_key_arr[ j ] ] ) {
@@ -339,7 +366,7 @@
 							};
 
 						};
-						
+
 						for ( var j = nq_key_arr.length; j--; ) {
 
 							if ( item[ nq_key_arr[ j ] ] === rq.q[ nq_key_arr[ j ] ] ) {
@@ -353,9 +380,9 @@
 						if ( match_bool === true ) {
 
 							match_arr.push( rq.arr[ i ] );
-							
+
 						};
-					
+
 					};
 
 					return match_arr;
@@ -407,7 +434,7 @@
 			cookie_to_hash: function ( cookie ) {
 
 				var pair_arr = cookie.split( /;\s*/ )
-				var cookie_hash = {}; 
+				var cookie_hash = {};
 
 				for ( var i = 0; i < pair_arr.length; i++ ) {
 
@@ -459,7 +486,7 @@
 				form.style.display = "none";
 
 				document.body.appendChild( form );
-				
+
 				form.submit();
 
 			},
@@ -531,7 +558,9 @@
 
 				});
 
-			}
+			},
+
+
 
 		};
 
@@ -580,7 +609,7 @@
 
 					cookie_arr.forEach( function ( cookie ) {
 
-						chrome.cookies.remove({ 
+						chrome.cookies.remove({
 
 							url: url,
 							name: cookie.name,

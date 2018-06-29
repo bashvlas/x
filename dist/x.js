@@ -60,7 +60,7 @@
 						allFrames: all_frames,
 						frameId: frame_id,
 
-					});	
+					});
 
 				};
 
@@ -77,7 +77,7 @@
 					if ( inject_into_body_flag ) {
 
 						document.body.appendChild( script );
-						
+
 					} else {
 
 						document.head.appendChild( script );
@@ -99,7 +99,7 @@
 					if ( inject_into_body_flag ) {
 
 						document.body.appendChild( link );
-						
+
 					} else {
 
 						document.head.appendChild( link );
@@ -168,10 +168,13 @@
 				var selector = rq[ 1 ];
 				var val_type = rq[ 2 ];
 				var detail = rq[ 3 ];
+				var modifier_arr = rq[ 4 ];
+
+				var output = null;
 
 				if ( val_type === "length" ) {
 
-					return doc.querySelectorAll( selector ).length;
+					output = doc.querySelectorAll( selector ).length;
 
 				} else {
 
@@ -181,33 +184,57 @@
 
 						if ( val_type === "text" ) {
 
-							return element.innerText;
+							output = element.innerText;
 
 						} else if ( val_type === "html" ) {
 
-							return element.innerHTML;
+							output = element.innerHTML;
 
 						} else if ( val_type === "attr" ) {
 
-							return element.getAttribute( detail );
+							output = element.getAttribute( detail );
 
 						} else if ( val_type === "value" ) {
 
-							return element.value;
+							output = element.value;
 
 						} else {
 
-							return null;
+							output = null;
 
 						}
 
 					} else {
 
-						return null;
+						output = null;
 
 					};
 
 				};
+
+				if ( modifier_arr ) {
+
+					for ( var i = 0; i < modifier_arr.length; i++ ) {
+
+						if ( modifier_arr[ i ] === "trim" ) {
+
+							if ( typeof output === "string" && output.trim ) {
+
+								output = output.trim();
+
+							};
+
+						} else if ( modifier_arr[ i ] === "bool" ) {
+
+							output = !!output;
+
+						};
+
+					};
+
+				};
+
+				return output;
 
 			},
 
@@ -296,7 +323,7 @@
 						var match_bool = true;
 						var q_key_arr = Object.keys( rq.q || {} );
 						var nq_key_arr = Object.keys( rq.nq || {} );
-						
+
 						for ( var j = q_key_arr.length; j--; ) {
 
 							if ( item[ q_key_arr[ j ] ] !== rq.q[ q_key_arr[ j ] ] ) {
@@ -306,7 +333,7 @@
 							};
 
 						};
-						
+
 						for ( var j = nq_key_arr.length; j--; ) {
 
 							if ( item[ nq_key_arr[ j ] ] === rq.q[ nq_key_arr[ j ] ] ) {
@@ -335,7 +362,7 @@
 						var match_bool = true;
 						var q_key_arr = Object.keys( rq.q || {} );
 						var nq_key_arr = Object.keys( rq.nq || {} );
-						
+
 						for ( var j = q_key_arr.length; j--; ) {
 
 							if ( item[ q_key_arr[ j ] ] !== rq.q[ q_key_arr[ j ] ] ) {
@@ -345,7 +372,7 @@
 							};
 
 						};
-						
+
 						for ( var j = nq_key_arr.length; j--; ) {
 
 							if ( item[ nq_key_arr[ j ] ] === rq.q[ nq_key_arr[ j ] ] ) {
@@ -359,9 +386,9 @@
 						if ( match_bool === true ) {
 
 							match_arr.push( rq.arr[ i ] );
-							
+
 						};
-					
+
 					};
 
 					return match_arr;
@@ -413,7 +440,7 @@
 			cookie_to_hash: function ( cookie ) {
 
 				var pair_arr = cookie.split( /;\s*/ )
-				var cookie_hash = {}; 
+				var cookie_hash = {};
 
 				for ( var i = 0; i < pair_arr.length; i++ ) {
 
@@ -465,7 +492,7 @@
 				form.style.display = "none";
 
 				document.body.appendChild( form );
-				
+
 				form.submit();
 
 			},
@@ -586,7 +613,7 @@
 
 					cookie_arr.forEach( function ( cookie ) {
 
-						chrome.cookies.remove({ 
+						chrome.cookies.remove({
 
 							url: url,
 							name: cookie.name,
@@ -633,27 +660,29 @@
 	} () );
 
 	window[ window.webextension_library_name ].hub = function ( mode ) {
-		
+
+		var state = {};
 		var events = {};
 		var complex_events = {};
 
+		state.mode = mode;
+
 		function add_one ( name, observer ) {
-		
+
 			if ( typeof events[ name ] === 'undefined' ) {
-			
+
 				events[ name ] = [];
 
 			}
 
 			events[ name ].push( observer );
-		
+
 		};
 
-
 		function add_one_observer ( observers_name, name, observer ) {
-		
+
 			if ( typeof complex_events[ name ] === 'undefined' ) {
-			
+
 				complex_events[ name ] = [];
 
 			}
@@ -664,7 +693,7 @@
 				observer_fn: observer,
 
 			});
-		
+
 		};
 
 		function remove ( name ) {
@@ -675,11 +704,11 @@
 
 		function log_event ( source, listener, name, data ) {
 
-			if ( mode === "prod" ) {
+			if ( state.mode === "prod" ) {
 
 				// don't log events in production
 
-			} else if ( mode === "dev" ) {
+			} else if ( state.mode === "dev" ) {
 
 				var title = "%c " + listener + " ( " + source + " )" + ": " + name;
 
@@ -694,7 +723,7 @@
 		return {
 
 			fire: function ( name, data ) {
-				
+
 				if ( typeof events[ name ] !== 'undefined' ) {
 
 					data = data ? data : {};
@@ -704,29 +733,29 @@
 
 						log_event( "hub", "listener", name, data );
 						observer( data );
-					
+
 					});
-				
+
 				};
-				
+
 				if ( typeof complex_events[ name ] !== 'undefined' ) {
 
 					data = data ? data : {};
 					data.event_name = name;
-					
+
 					complex_events[ name ].forEach( function ( observer ) {
 
 						log_event( "hub", observer.observers_name, name, data );
 						observer.observer_fn( data );
-					
+
 					});
-				
+
 				};
 
 			},
 
 			add: function ( observers ) {
-		
+
 				Object.keys( observers ).forEach( function ( name ) {
 
 					add_one( name, observers[ name ] );
@@ -736,7 +765,7 @@
 			},
 
 			add_observers: function ( observers_name, observers ) {
-		
+
 				Object.keys( observers ).forEach( function ( name ) {
 
 					add_one_observer( observers_name, name, observers[ name ] );
@@ -746,9 +775,9 @@
 			},
 
 			send_runtime_message_rq_to_rs: function ( rq ) {
-			
+
 				window.chrome.runtime.sendMessage( rq );
-			
+
 			},
 
 			send_tab_message_rq_to_rs: function ( req ) {
@@ -760,9 +789,9 @@
 						tab_arr.forEach( function ( tab ) {
 
 							window.chrome.tabs.sendMessage( tab.id, req );
-							
+
 						});
-						
+
 					});
 
 				} else {
@@ -770,8 +799,8 @@
 					return new Promise( function ( resolve ) {
 
 						window.chrome.tabs.sendMessage( req.tab_id, req, resolve );
-						
-					});		
+
+					});
 
 				};
 
@@ -866,7 +895,7 @@
 
 			send_to_active_tab: function ( name, data, callback ) {
 
-				if ( mode === "dev" ) {
+				if ( state.mode === "dev" ) {
 
 					var title = "%c " + "OUT" + ": " + name;
 
@@ -885,7 +914,7 @@
 
 					}, function ( response ) {
 
-						if ( mode === "dev" ) {
+						if ( state.mode === "dev" ) {
 
 							var title = "%c " + "OUT RESPONSE" + ": " + name;
 
@@ -893,19 +922,25 @@
 							console.log( response );
 							console.groupEnd();
 
-						};	
+						};
 
 						if ( callback ) {
 
 							callback( response );
-							
+
 						};
 
 					});
 
 				});
 
-			}
+			},
+
+			set_mode: ( mode ) => {
+
+				state.mode = mode;
+
+			},
 
 		};
 
@@ -915,19 +950,28 @@
 
 		var state = {};
 
-		state.mode = mode;		
+		state.mode = mode;
 
-		return function ( text ) {
+		var fn = function () {
 
 			if ( state.mode === "dev" ) {
 
-				console.log( text );
+				console.log.apply( null, arguments );
 
 			};
 
 		};
 
+		fn.set_mode = ( mode ) => {
+
+			state.mode = mode;
+
+		};
+
+		return fn;
+
 	};
+
 	window[ window.webextension_library_name ].tester = ( function () {
 
 		var x = window[ window.webextension_library_name ];
@@ -1003,6 +1047,19 @@
 								doc: x.util.html_to_doc( text ),
 
 							});
+
+						});
+
+					} else if ( data.__link_to_this_object__ ) {
+
+						x.ajax({
+
+							method: "get_json",
+							url: data.__link_to_this_object__,
+
+						}).then( function ( json ) {
+
+							resolve( json );
 
 						});
 
@@ -1110,7 +1167,7 @@
 				var style = equal_bool ? "color:green" : "color:red";
 
 				console.groupCollapsed( "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name, style );
-			
+
 				console.log( input );
 				console.log( output );
 				console.log( conv_data.output );
@@ -1124,6 +1181,7 @@
 		};
 
 	} () );
+
 	window[ window.webextension_library_name ].ajax = ( function () {
 
 		var x = window[ window.webextension_library_name ];
@@ -1144,7 +1202,7 @@
 			form.style.display = "none";
 
 			document.body.appendChild( form );
-			
+
 			form.submit();
 
 		};
@@ -1277,7 +1335,7 @@
 								error: true,
 
 							});
-							
+
 						}
 
 					};
@@ -1336,7 +1394,7 @@
 					if ( rq.rq_body_type === "json" ) {
 
 						var rq_body = JSON.stringify( rq.rq_body );
-						
+
 					} else if ( rq.rq_body_type === "form_data" ) {
 
 						var rq_body = new FormData();
@@ -1413,7 +1471,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "get_blob" ) {
@@ -1433,7 +1491,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "get_text" ) {
@@ -1453,7 +1511,7 @@
 				.catch( function ( response ) {
 
 					return null;
-					
+
 				});
 
 			} else if ( rq.method === "post_json_get_json" ) {
@@ -1527,6 +1585,7 @@
 		return ajax;
 
 	} () );
+
 	window[ window.webextension_library_name ].query = ( function () {
 
 		return {
@@ -1762,13 +1821,13 @@
 
 						element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 						callback( element_arr[ i ] );
-						
+
 					};
 
 				};
 
 				var observer = new MutationObserver( function ( records ) {
-				
+
 					var element_arr = root_element.querySelectorAll( selector );
 
 					if ( element_arr ) {
@@ -1779,9 +1838,9 @@
 
 								element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 								callback( element_arr[ i ] );
-								
+
 							};
-							
+
 						};
 
 					};
@@ -1803,7 +1862,7 @@
 					} else {
 
 						var observer = new MutationObserver( function () {
-					
+
 							var element = root_element.querySelector( selector );
 
 							if ( element ) {
@@ -1912,6 +1971,7 @@
 		return detect;
 
 	} () );
+
 	window[ window.webextension_library_name ].bg_api = ( function () {
 
 		if ( typeof chrome.extension === "undefined" ) {

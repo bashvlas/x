@@ -30,13 +30,13 @@
 
 						element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 						callback( element_arr[ i ] );
-						
+
 					};
 
 				};
 
 				var observer = new MutationObserver( function ( records ) {
-				
+
 					var element_arr = root_element.querySelectorAll( selector );
 
 					if ( element_arr ) {
@@ -47,9 +47,9 @@
 
 								element_arr[ i ].dataset[ "detected_" + detector_id ] = "1";
 								callback( element_arr[ i ] );
-								
+
 							};
-							
+
 						};
 
 					};
@@ -71,7 +71,7 @@
 					} else {
 
 						var observer = new MutationObserver( function () {
-					
+
 							var element = root_element.querySelector( selector );
 
 							if ( element ) {

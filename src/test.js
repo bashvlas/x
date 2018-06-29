@@ -77,6 +77,19 @@
 
 						});
 
+					} else if ( data.__link_to_this_object__ ) {
+
+						x.ajax({
+
+							method: "get_json",
+							url: data.__link_to_this_object__,
+
+						}).then( function ( json ) {
+
+							resolve( json );
+
+						});
+
 					} else {
 
 						var total_key_count = Object.keys( data ).length;
@@ -181,7 +194,7 @@
 				var style = equal_bool ? "color:green" : "color:red";
 
 				console.groupCollapsed( "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name, style );
-			
+
 				console.log( input );
 				console.log( output );
 				console.log( conv_data.output );

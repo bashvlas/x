@@ -1,25 +1,28 @@
 
 	window[ window.webextension_library_name ].hub = function ( mode ) {
-		
+
+		var state = {};
 		var events = {};
 		var complex_events = {};
 
+		state.mode = mode;
+
 		function add_one ( name, observer ) {
-		
+
 			if ( typeof events[ name ] === 'undefined' ) {
-			
+
 				events[ name ] = [];
 
 			}
 
 			events[ name ].push( observer );
-		
+
 		};
 
 		function add_one_observer ( observers_name, name, observer ) {
-		
+
 			if ( typeof complex_events[ name ] === 'undefined' ) {
-			
+
 				complex_events[ name ] = [];
 
 			}
@@ -30,7 +33,7 @@
 				observer_fn: observer,
 
 			});
-		
+
 		};
 
 		function remove ( name ) {
@@ -41,11 +44,11 @@
 
 		function log_event ( source, listener, name, data ) {
 
-			if ( mode === "prod" ) {
+			if ( state.mode === "prod" ) {
 
 				// don't log events in production
 
-			} else if ( mode === "dev" ) {
+			} else if ( state.mode === "dev" ) {
 
 				var title = "%c " + listener + " ( " + source + " )" + ": " + name;
 
@@ -60,7 +63,7 @@
 		return {
 
 			fire: function ( name, data ) {
-				
+
 				if ( typeof events[ name ] !== 'undefined' ) {
 
 					data = data ? data : {};
@@ -70,23 +73,23 @@
 
 						log_event( "hub", "listener", name, data );
 						observer( data );
-					
+
 					});
-				
+
 				};
-				
+
 				if ( typeof complex_events[ name ] !== 'undefined' ) {
 
 					data = data ? data : {};
 					data.event_name = name;
-					
+
 					complex_events[ name ].forEach( function ( observer ) {
 
 						log_event( "hub", observer.observers_name, name, data );
 						observer.observer_fn( data );
-					
+
 					});
-				
+
 				};
 
 			},
@@ -128,7 +131,7 @@
 							window.chrome.tabs.sendMessage( tab.id, req );
 
 						});
-						
+
 					});
 
 				} else {
@@ -232,7 +235,7 @@
 
 			send_to_active_tab: function ( name, data, callback ) {
 
-				if ( mode === "dev" ) {
+				if ( state.mode === "dev" ) {
 
 					var title = "%c " + "OUT" + ": " + name;
 
@@ -251,7 +254,7 @@
 
 					}, function ( response ) {
 
-						if ( mode === "dev" ) {
+						if ( state.mode === "dev" ) {
 
 							var title = "%c " + "OUT RESPONSE" + ": " + name;
 
@@ -259,19 +262,25 @@
 							console.log( response );
 							console.groupEnd();
 
-						};	
+						};
 
 						if ( callback ) {
 
 							callback( response );
-							
+
 						};
 
 					});
 
 				});
 
-			}
+			},
+
+			set_mode: ( mode ) => {
+
+				state.mode = mode;
+
+			},
 
 		};
 
@@ -281,16 +290,24 @@
 
 		var state = {};
 
-		state.mode = mode;		
+		state.mode = mode;
 
-		return function ( text ) {
+		var fn = function () {
 
 			if ( state.mode === "dev" ) {
 
-				console.log( text );
+				console.log.apply( null, arguments );
 
 			};
 
 		};
+
+		fn.set_mode = ( mode ) => {
+
+			state.mode = mode;
+
+		};
+
+		return fn;
 
 	};
