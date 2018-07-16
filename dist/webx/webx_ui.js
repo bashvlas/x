@@ -164,7 +164,7 @@
 			this.x.util.wait( 200 )
 			.then( () => {
 
-				$( this.drawer_overlay ).css( "display", "hidden" );
+				$( this.drawer_overlay ).css( "display", "none" );
 
 			});
 

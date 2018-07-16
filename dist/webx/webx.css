@@ -16,32 +16,8 @@
 			width: 100%;
 			height: 100%;
 
-			background-color: #f2f2f2;
-			font-family: Roboto;
-
-		}
-
-	/**/
-
-	/* general */
-
-		body {
-
-			width: 420px;
-			height: 600px;
-			margin: 0px;
-
-		}
-
-		#root {
-
-			position: relative;
-
-			width: 100%;
-			height: 100%;
-
-			background-color: #f2f2f2;
-			font-family: Roboto;
+			background-color: #E1E1E1;
+			font-family: Roboto, sans-serif;
 
 		}
 
@@ -311,6 +287,33 @@
 			height: 32px;
 
 			box-shadow: none;
+
+		}
+
+	/**/
+
+	/* startup_overlay */
+
+		#startup_overlay {
+
+			position: absolute;
+			z-index: 1000;
+
+			top: 0px;
+			left: 0px;
+			width: 100%;
+			height: 100%;
+
+			background-color: #FFFFFF;
+
+			transition: all 0.2s ease;
+
+		}
+
+		#startup_overlay.hidden {
+
+			opacity: 0;
+			top: -100%;
 
 		}
 

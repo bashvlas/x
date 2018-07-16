@@ -6,6 +6,49 @@
 
 		return {
 
+			get_scrollbar_width () {
+
+				var div = document.createElement('div');
+				div.style.visibility = 'hidden';
+				div.style.overflow = 'scroll';
+				div.style.width = '50px';
+				div.style.height = '50px';
+				div.style.position = 'absolute';
+				document.body.appendChild(div);
+				var result = div.offsetWidth - div.clientWidth;
+				div.parentNode.removeChild(div);
+				return result;
+
+			},
+
+			decode_json: ( json ) => {
+
+				try {
+
+					return JSON.parse( json );
+
+				} catch ( e ) {
+
+					return null;
+
+				};
+
+			},
+
+			encode_json: ( json ) => {
+
+				try {
+
+					return JSON.stringify( json );
+
+				} catch ( e ) {
+
+					return null;
+
+				};
+
+			},
+
 			inject_scripts: function ( tab_id, script_src_arr, options ) {
 
 				return new Promise( function ( resolve ) {
