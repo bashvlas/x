@@ -209,7 +209,11 @@
 
 				var output = null;
 
-				if ( val_type === "length" ) {
+				if ( val_type === "jquery_html" ) {
+
+					output = $( selector, doc ).html();
+
+				} else if ( val_type === "length" ) {
 
 					output = doc.querySelectorAll( selector ).length;
 
@@ -264,6 +268,18 @@
 						} else if ( modifier_arr[ i ] === "bool" ) {
 
 							output = !!output;
+
+						} else if ( modifier_arr[ i ][ 0 ] === "match" && output && output.match ) {
+
+							output = output.match( modifier_arr[ i ][ 1 ] );
+
+						} else if ( modifier_arr[ i ][ 0 ] === "array_item" && output ) {
+
+							output = output[ modifier_arr[ i ][ 1 ] ];
+
+						} else if ( modifier_arr[ i ][ 0 ] === "replace" && output && output.replace ) {
+
+							output = output.replace( modifier_arr[ i ][ 1 ], modifier_arr[ i ][ 2 ] );
 
 						};
 

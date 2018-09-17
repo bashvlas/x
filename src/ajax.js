@@ -423,6 +423,7 @@
 
 									meta: {
 
+										success: true,
 										error: false,
 										status: this.status,
 
@@ -438,6 +439,7 @@
 
 									meta: {
 
+										success: false,
 										error: true,
 										status: this.status,
 										
@@ -475,6 +477,7 @@
 
 								meta: {
 
+									success: true,
 									error: false,
 									status: this.status,
 
@@ -487,8 +490,13 @@
 
 							resolve({
 
-								status: this.status,
-								error: true,
+								meta: {
+	
+									success: false,
+									error: true,
+									status: this.status,
+
+								},
 
 							});
 
@@ -500,14 +508,19 @@
 
 						resolve({
 
-							status: this.status,
-							error: true,
+							meta: {
+
+								success: false,
+								error: true,
+								status: this.status,
+
+							},
 
 						});
 
 					};
 
-				// crate payload
+				// create payload
 
 					if ( rq.payload ) {
 
@@ -515,13 +528,23 @@
 
 							var query_string = "";
 
-							Object.keys( rq.payload.data ).forEach( ( key ) => {
+							Object.keys( rq.payload.data ).forEach( ( key, index ) => {
+
+								if ( index > 0 ) {
+
+									query_string += "&";
+
+								};
 
 								query_string += key + "=" + encodeURIComponent( rq.payload.data[ key ] );
 
 							});
 
-							rq.url += "?" + query_string;
+							if ( query_string ) {
+
+								rq.url += "?" + query_string;
+								
+							};
 
 						};
 

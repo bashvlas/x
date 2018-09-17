@@ -1,11 +1,17 @@
 
-	window[ window.webextension_library_name ].hub = function ( mode ) {
+	window[ window.webextension_library_name ].hub = function ( mode, options ) {
 
 		var state = {};
 		var events = {};
 		var complex_events = {};
+		var default_options = {
+
+			mute_in_log_event_name_arr: [],
+
+		};
 
 		state.mode = mode;
+		state.options = options || default_options;
 
 		function add_one ( name, observer ) {
 
@@ -50,11 +56,15 @@
 
 			} else if ( state.mode === "dev" ) {
 
-				var title = "%c " + listener + " ( " + source + " )" + ": " + name;
+				if ( state.options.mute_in_log_event_name_arr.indexOf( name ) === -1 ) {
 
-				console.groupCollapsed( title, "color: blue" );
-				console.log( data );
-				console.groupEnd();
+					var title = "%c " + listener + " ( " + source + " )" + ": " + name;
+
+					console.groupCollapsed( title, "color: blue" );
+					console.log( data );
+					console.groupEnd();
+
+				};
 
 			};
 

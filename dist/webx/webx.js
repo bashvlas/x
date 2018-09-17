@@ -215,7 +215,11 @@
 
 				var output = null;
 
-				if ( val_type === "length" ) {
+				if ( val_type === "jquery_html" ) {
+
+					output = $( selector, doc ).html();
+
+				} else if ( val_type === "length" ) {
 
 					output = doc.querySelectorAll( selector ).length;
 
@@ -270,6 +274,18 @@
 						} else if ( modifier_arr[ i ] === "bool" ) {
 
 							output = !!output;
+
+						} else if ( modifier_arr[ i ][ 0 ] === "match" && output && output.match ) {
+
+							output = output.match( modifier_arr[ i ][ 1 ] );
+
+						} else if ( modifier_arr[ i ][ 0 ] === "array_item" && output ) {
+
+							output = output[ modifier_arr[ i ][ 1 ] ];
+
+						} else if ( modifier_arr[ i ][ 0 ] === "replace" && output && output.replace ) {
+
+							output = output.replace( modifier_arr[ i ][ 1 ], modifier_arr[ i ][ 2 ] );
 
 						};
 
@@ -704,13 +720,19 @@
 
 	} () );
 
-	window[ window.webextension_library_name ].hub = function ( mode ) {
+	window[ window.webextension_library_name ].hub = function ( mode, options ) {
 
 		var state = {};
 		var events = {};
 		var complex_events = {};
+		var default_options = {
+
+			mute_in_log_event_name_arr: [],
+
+		};
 
 		state.mode = mode;
+		state.options = options || default_options;
 
 		function add_one ( name, observer ) {
 
@@ -755,11 +777,15 @@
 
 			} else if ( state.mode === "dev" ) {
 
-				var title = "%c " + listener + " ( " + source + " )" + ": " + name;
+				if ( state.options.mute_in_log_event_name_arr.indexOf( name ) === -1 ) {
 
-				console.groupCollapsed( title, "color: blue" );
-				console.log( data );
-				console.groupEnd();
+					var title = "%c " + listener + " ( " + source + " )" + ": " + name;
+
+					console.groupCollapsed( title, "color: blue" );
+					console.log( data );
+					console.groupEnd();
+
+				};
 
 			};
 
@@ -1651,6 +1677,7 @@
 
 									meta: {
 
+										success: true,
 										error: false,
 										status: this.status,
 
@@ -1666,6 +1693,7 @@
 
 									meta: {
 
+										success: false,
 										error: true,
 										status: this.status,
 										
@@ -1703,6 +1731,7 @@
 
 								meta: {
 
+									success: true,
 									error: false,
 									status: this.status,
 
@@ -1715,8 +1744,13 @@
 
 							resolve({
 
-								status: this.status,
-								error: true,
+								meta: {
+	
+									success: false,
+									error: true,
+									status: this.status,
+
+								},
 
 							});
 
@@ -1728,14 +1762,19 @@
 
 						resolve({
 
-							status: this.status,
-							error: true,
+							meta: {
+
+								success: false,
+								error: true,
+								status: this.status,
+
+							},
 
 						});
 
 					};
 
-				// crate payload
+				// create payload
 
 					if ( rq.payload ) {
 
@@ -1743,13 +1782,23 @@
 
 							var query_string = "";
 
-							Object.keys( rq.payload.data ).forEach( ( key ) => {
+							Object.keys( rq.payload.data ).forEach( ( key, index ) => {
+
+								if ( index > 0 ) {
+
+									query_string += "&";
+
+								};
 
 								query_string += key + "=" + encodeURIComponent( rq.payload.data[ key ] );
 
 							});
 
-							rq.url += "?" + query_string;
+							if ( query_string ) {
+
+								rq.url += "?" + query_string;
+								
+							};
 
 						};
 
