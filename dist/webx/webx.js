@@ -2564,3 +2564,80 @@
 			return conv;
 
 	} () );
+
+	window[ window.webextension_library_name ].convert = ( function ( input, data_arr ) {
+
+		try {
+
+			var output = input;
+
+			if ( data_arr ) {
+
+				for ( var i = 0; i < data_arr.length; i++ ) {
+
+					conv_data = data_arr[ i ];
+
+					if ( conv_data[ 0 ] === "object_property" ) {
+
+						output = output[ conv_data[ 1 ] ];
+
+					} else if ( conv_data[ 0 ] === "array_item" ) {
+
+						output = output[ conv_data[ 1 ] ];
+
+					} else if ( conv_data[ 0 ] === "match" ) {
+
+						output = output.match( conv_data[ 1 ] );
+
+					} else if ( conv_data[ 0 ] === "query_selector" ) {
+
+						output = output.querySelector( conv_data[ 1 ] );
+
+					} else if ( conv_data[ 0 ] === "get_attribute" ) {
+
+						output = output.getAttribute( conv_data[ 1 ] );
+
+					} else if ( conv_data[ 0 ] === "prepend" ) {
+
+						output = conv_data[ 1 ] + output;
+
+					} else if ( conv_data[ 0 ] === "trim" ) {
+
+						output = output.trim();
+
+					} else if ( conv_data[ 0 ] === "split" ) {
+
+						output = output.split( conv_data[ 1 ] );
+
+					} else if ( conv_data[ 0 ] === "replace" ) {
+
+						output = output.replace( conv_data[ 1 ], conv_data[ 2 ] );
+
+					} else if ( conv_data[ 0 ] === "decode_uri" ) {
+
+						output = decodeURIComponent( output );
+
+					} else if ( conv_data[ 0 ] === "decode_json" ) {
+
+						output = JSON.parse( output );
+
+					} else if ( conv_data[ 0 ] === "bool" ) {
+
+						output = !!output;
+
+					};
+
+				};
+
+			};
+
+			return output;
+
+		} catch ( e ) {
+
+			return null;
+
+		};
+
+
+	});
