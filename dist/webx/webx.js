@@ -2340,7 +2340,6 @@
 				silence: [],
 
 			};
-			var conv_data_arr = [];
 
 		// util functions
 
@@ -2486,7 +2485,6 @@
 					if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
 
 						x.conv.log_conv_data( conv_data );
-						conv_data_arr.push( conv_data );
 
 					};
 
@@ -2552,12 +2550,6 @@
 			};
 
 			conv.get_conv_data = conv_with_data;
-
-			conv.flush = function () {
-
-				conv_data_arr.forEach( conv.log_conv_data );
-
-			};
 
 		// return
 
