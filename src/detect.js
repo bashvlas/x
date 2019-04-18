@@ -58,6 +58,8 @@
 
 				observer.observe( root_element, { childList: true, subtree: true } );
 
+				return { observer: observer };
+
 			} else if ( method === "once" ) {
 
 				return new Promise( function ( resolve ) {

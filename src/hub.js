@@ -1,6 +1,8 @@
 
 	window[ window.webextension_library_name ].hub = function ( mode, options ) {
 
+		var x = window[ window.webextension_library_name ];
+
 		var state = {};
 		var events = {};
 		var complex_events = {};
@@ -48,28 +50,6 @@
 
 		};
 
-		function log_event ( source, listener, name, data ) {
-
-			if ( state.mode === "prod" ) {
-
-				// don't log events in production
-
-			} else if ( state.mode === "dev" ) {
-
-				if ( state.options.mute_in_log_event_name_arr.indexOf( name ) === -1 ) {
-
-					var title = "%c " + listener + " ( " + source + " )" + ": " + name;
-
-					console.groupCollapsed( title, "color: blue" );
-					console.log( data );
-					console.groupEnd();
-
-				};
-
-			};
-
-		};
-
 		return {
 
 			fire: function ( name, data ) {
@@ -81,7 +61,7 @@
 
 					events[ name ].forEach( function ( observer ) {
 
-						log_event( "hub", "listener", name, data );
+						x.log.log_event( "hub", "listener", name, data );
 						observer( data );
 
 					});
@@ -95,7 +75,7 @@
 
 					complex_events[ name ].forEach( function ( observer ) {
 
-						log_event( "hub", observer.observers_name, name, data );
+						x.log.log_event( "hub", observer.observers_name, name, data );
 						observer.observer_fn( data );
 
 					});
@@ -169,14 +149,14 @@
 
 							if ( observers[ "all" ] ) {
 
-								log_event( "window", context + " " + sender, name, data );
+								x.log.log_event( "window", context + " " + sender, name, data );
 								observers[ "all" ]( data, event );
 
 							};
 
 							if ( observers[ name ] ) {
 
-								log_event( "window", context + " " + sender, name, data );
+								x.log.log_event( "window", context + " " + sender, name, data );
 								observers[ name ]( data, event );
 
 							};
@@ -200,14 +180,14 @@
 
 						if ( observers[ "all" ] ) {
 
-							log_event( "runtime", observers_name, name, data );
+							x.log.log_event( "runtime", observers_name, name, data );
 							observers[ "all" ]( data, sender, callback );
 
 						};
 
 						if ( observers[ name ] ) {
 
-							log_event( "runtime", observers_name, name, data );
+							x.log.log_event( "runtime", observers_name, name, data );
 							observers[ name ]( data, sender, callback );
 
 						};
@@ -296,28 +276,313 @@
 
 	};
 
-	window[ window.webextension_library_name ].log = function ( mode ) {
+	window[ window.webextension_library_name ].log = ( function () {
 
-		var state = {};
+		var x = window[ window.webextension_library_name ];
 
-		state.mode = mode;
+		var state = {
+
+			log_item_arr: [],
+
+		};
+
+		var default_options = {
+
+			mute_in_log_event_name_arr: [],
+
+		};
+
+		// write log item
+
+		function write_log_item ( log_item ) {
+
+			if ( log_item.type === "normal" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.arguments[ 0 ];
+
+				console.groupCollapsed( title, "color: black" );
+
+				for ( var i = 1; i < log_item.arguments.length; i ++ ) {
+
+					console.log( log_item.arguments[ i ] );
+
+				};
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "conv_data" ) {
+
+				var conv_data = log_item.conv_data;
+				var title = "%c " + log_item.app_name + " | " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
+
+				if ( conv_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(conv_data.input);
+					console.log(conv_data.stack);
+
+				} else if (!conv_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(conv_data.input);
+
+				} else {
+
+					console.groupCollapsed( title, "color: green" );
+					console.log(conv_data.input);
+					console.log(conv_data.output);
+
+				}
+
+				conv_data.conv_data_arr.forEach( function ( conv_data ) {
+
+					write_log_item({
+
+						type: "conv_data",
+						conv_data: conv_data,
+
+					});
+
+				});
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "event" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.listener + " ( " + log_item.source + " )" + ": " + log_item.name;
+
+				console.groupCollapsed( title, "color: blue" );
+				console.log( log_item.data );
+				console.groupEnd();
+
+			};
+
+
+		};
+
+		// log type = normal
 
 		var fn = function () {
 
+			var log_item = {
+
+				type: "normal",
+				app_name: state.app.name,
+
+				arguments: x.convert( arguments, [[ "list_to_arr" ]] ),
+
+			};
+
+			x.report_manager.store_log_item( log_item ); 
+
 			if ( state.mode === "dev" ) {
 
-				console.log.apply( null, arguments );
+				write_log_item( log_item )
 
 			};
 
 		};
 
-		fn.set_mode = ( mode ) => {
+		// log type = conv_data
 
-			state.mode = mode;
+		fn.log_conv_data = function ( conv_data ) {
+
+			var log_item = {
+
+				type: "conv_data",
+				app_name: state.app.name,
+
+				conv_data,
+
+			};
+
+			x.report_manager.store_log_item( log_item );
+
+			if ( state.mode === "dev" ) {
+
+				write_log_item( log_item )
+
+			};
+
+		};
+
+		// log type = event
+
+		fn.log_event = function ( source, listener, name, data ) {
+
+			var log_item = {
+
+				type: "event",
+				app_name: state.app.name,
+
+				source,
+				listener,
+				name,
+				data,
+
+			};
+
+			if ( state.options.mute_in_log_event_name_arr.indexOf( log_item.name ) === -1 ) {
+
+				x.report_manager.store_log_item( log_item );
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item );
+
+				};
+
+			};
+
+		};
+
+		// utility function to log an array of log_item
+
+		fn.log_log_item_arr = function ( log_item_arr ) {
+
+			// console.log( "log_item_arr", log_item_arr );
+
+			for ( var i = 0; i < log_item_arr.length; i++ ) {
+
+				var log_item = x.convert( log_item_arr[ i ], [
+					[ "decode_json" ],
+				]);
+
+				// console.log( "log_item", log_item );
+
+				write_log_item( log_item );
+
+			};
+
+		};
+
+		// init
+
+		fn.init = function ( app, options ) {
+
+			state.app = app
+			state.mode = app.config.mode;
+			state.options = options || default_options;
 
 		};
 
 		return fn;
 
-	};
+	} () );
+
+	window[ window.webextension_library_name ].report_manager_hub = ( function () {
+
+		var x = window[ window.webextension_library_name ];
+
+		var _state = {
+
+			config: null,
+			log_item_arr: [],
+
+		};
+
+		var _pub = {
+
+			store_log_item ( data ) {
+
+				_state.log_item_arr.push( data.log_item );
+
+				if ( _state.log_item_arr.length > _state.config.report_config.max_log_item_arr_length ) {
+
+					_state.log_item_arr.splice( 0, 20 );
+
+				};
+
+			},
+
+			generate_webx_report ( data ) {
+
+				var webx_report = {};
+
+				webx_report.version = chrome.runtime.getManifest().version;
+				webx_report.version_name = chrome.runtime.getManifest().version_name;
+
+				webx_report.log_item_arr = _state.log_item_arr;
+
+				return webx_report;
+
+			},
+
+			download_webx_report ( data ) {
+
+				var webx_report = {};
+
+				webx_report.version = chrome.runtime.getManifest().version;
+				webx_report.version_name = chrome.runtime.getManifest().version_name;
+
+				webx_report.log_item_arr = _state.log_item_arr;
+
+				var json = x.util.encode_json( webx_report );
+				var blob = new Blob([ json ]);
+				var url = URL.createObjectURL( blob );
+
+				window.open( url );
+				x.util.download_file( data.report_name, url );
+
+			},
+
+			init: function ( config ) {
+
+				_state.config = config;
+
+				x.bg_api.register( "report_manager_hub", _pub );
+
+			},
+
+		};
+
+		return _pub;
+
+	} () );
+
+	window[ window.webextension_library_name ].report_manager = ( function () {
+
+		var x = window[ window.webextension_library_name ];
+
+		var _state = {
+
+		};
+
+		var _pub = {
+
+			store_log_item: function ( log_item ) {
+
+				if ( _state.config && _state.config.report_config && _state.config.report_config.active ) {
+
+					log_item = x.convert( log_item, [
+						[ "simplify" ],
+						[ "encode_json" ],
+					]);
+
+					x.bg_api.exec( "report_manager_hub", "store_log_item", {
+
+						log_item: log_item,
+
+					});
+
+				};
+
+			},
+
+			write_webx_report: function ( webx_report ) {
+
+				x.log.log_log_item_arr( webx_report.log_item_arr );
+
+			},
+
+			init: function ( config ) {
+
+				_state.config = config;
+
+			},
+
+		};
+
+		return _pub;
+
+	} () );

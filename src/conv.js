@@ -158,7 +158,7 @@
 
 					if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
 
-						x.conv.log_conv_data( conv_data );
+						x.log.log_conv_data( conv_data );
 
 					};
 
@@ -190,39 +190,6 @@
 
 			};
 
-			conv.log_conv_data = function ( conv_data ) {
-
-				var title = "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
-
-				if ( conv_data.error ) {
-
-					console.groupCollapsed( title, "color: red" );
-					console.log(conv_data.input);
-					console.log(conv_data.stack);
-
-				} else if (!conv_data.found) {
-
-					console.groupCollapsed( title, "color: #F0AD4E" );
-					console.log(conv_data.input);
-
-				} else {
-
-					console.groupCollapsed( title, "color: green" );
-					console.log(conv_data.input);
-					console.log(conv_data.output);
-
-				}
-
-				conv_data.conv_data_arr.forEach( function ( conv_data ) {
-
-					x.conv.log_conv_data( conv_data );
-
-				});
-
-				console.groupEnd();
-
-			};
-
 			conv.get_conv_data = conv_with_data;
 
 		// return
@@ -232,6 +199,8 @@
 	} () );
 
 	window[ window.webextension_library_name ].convert = ( function ( input, data_arr ) {
+
+		var x = window[ window.webextension_library_name ];
 
 		try {
 
@@ -243,6 +212,8 @@
 
 					conv_data = data_arr[ i ];
 
+					// object_property
+
 					if ( conv_data[ 0 ] === "object_property" ) {
 
 						output = output[ conv_data[ 1 ] ];
@@ -250,6 +221,14 @@
 					} else if ( conv_data[ 0 ] === "array_item" ) {
 
 						output = output[ conv_data[ 1 ] ];
+
+					}
+
+					// execute_method
+
+					else if ( conv_data[ 0 ] === "execute_method" ) {
+
+						output = output[ conv_data[ 1 ] ]( conv_data[ 2 ], conv_data[ 3 ], conv_data[ 4 ] );
 
 					} else if ( conv_data[ 0 ] === "match" ) {
 
@@ -263,10 +242,6 @@
 
 						output = output.getAttribute( conv_data[ 1 ] );
 
-					} else if ( conv_data[ 0 ] === "prepend" ) {
-
-						output = conv_data[ 1 ] + output;
-
 					} else if ( conv_data[ 0 ] === "trim" ) {
 
 						output = output.trim();
@@ -279,6 +254,14 @@
 
 						output = output.replace( conv_data[ 1 ], conv_data[ 2 ] );
 
+					}
+
+					// other
+
+					else if ( conv_data[ 0 ] === "prepend" ) {
+
+						output = conv_data[ 1 ] + output;
+
 					} else if ( conv_data[ 0 ] === "decode_uri" ) {
 
 						output = decodeURIComponent( output );
@@ -287,9 +270,108 @@
 
 						output = JSON.parse( output );
 
+					} else if ( conv_data[ 0 ] === "encode_json" ) {
+
+						output = JSON.stringify( output );
+
+					} else if ( conv_data[ 0 ] === "simplify" ) {
+
+						if (
+							output instanceof Function ||
+							output instanceof Element ||
+							output instanceof Window
+						) {
+
+							output = "***";
+
+						} else if ( typeof output === "object" && output !== null ) {
+
+							if ( typeof output.serialize === 'function' ) {
+
+								output = output.serialize();
+
+							} else if ( output instanceof Array ) {
+
+								var new_output = [];
+
+								output.forEach( ( output_item, index ) => {
+
+									new_output[ index ] = x.convert( output_item, [
+										[ "simplify" ],
+									]);
+
+								});
+
+								output = new_output;
+
+							} else if ( output.postMessage ) {
+
+								return "***";
+
+							} else {
+
+								var new_output = {};
+
+								Object.keys( output ).forEach( ( key ) => {
+
+									new_output[ key ] = x.convert( output[ key ], [
+										[ "simplify" ],
+									]);
+
+								});
+
+								output = new_output;
+
+							};
+
+						} else {
+
+							// don't do anything
+
+						};
+
+					} else if ( conv_data[ 0 ] === "clone" ) {
+
+						output = jQuery.extend( true, {}, output );
+
 					} else if ( conv_data[ 0 ] === "bool" ) {
 
 						output = !!output;
+
+					} else if ( conv_data[ 0 ] === "list_to_arr" ) {
+
+						var arr = [];
+
+						for ( var j = 0; j < output.length; j++ ) {
+
+							arr.push( output[ j ] );
+
+						};
+
+						output = arr;
+
+					} else if ( conv_data[ 0 ] === "concat" ) {
+
+						output = output.concat( conv_data[ 1 ] );
+
+					}
+
+					// map
+
+					else if ( conv_data[ 0 ] === "map" ) {
+
+						var new_arr = [];
+						var convesion_settings = conv_data[ 1 ];
+
+						for ( var j = 0; j < output.length; j++ ) {
+
+							var new_output_item = x.convert( output[ j ], convesion_settings );
+
+							new_arr.push( new_output_item );
+
+						};
+
+						output = new_arr;
 
 					};
 
@@ -304,6 +386,5 @@
 			return null;
 
 		};
-
 
 	});

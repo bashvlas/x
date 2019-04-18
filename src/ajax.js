@@ -428,7 +428,6 @@
 										status: this.status,
 
 									},
-
 									data: this.response
 
 								});
@@ -497,6 +496,7 @@
 									status: this.status,
 
 								},
+								data: this.response,
 
 							});
 

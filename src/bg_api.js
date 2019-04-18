@@ -44,18 +44,26 @@
 
 			exec: function ( api_name, method_name, input ) {
 
-				return new Promise ( function ( resolve ) {
+				if ( chrome.extension.getBackgroundPage && chrome.extension.getBackgroundPage() === window ) {
 
-					chrome.runtime.sendMessage({
+					return api_hash[ api_name ][ method_name ]( input );
 
-						_target: "bg_api",
-						api_name: api_name,
-						method_name: method_name,
-						input: input
+				} else {
 
-					}, resolve );
+					return new Promise ( function ( resolve ) {
 
-				});
+						chrome.runtime.sendMessage({
+
+							_target: "bg_api",
+							api_name: api_name,
+							method_name: method_name,
+							input: input
+
+						}, resolve );
+
+					});
+
+				};
 
 			},
 

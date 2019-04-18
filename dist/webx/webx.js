@@ -159,6 +159,20 @@
 
 			},
 
+			get_active_tab: () => {
+
+				return new Promise( ( resolve ) => {
+
+					chrome.tabs.query({ active: true, currentWindow: true }, ( tabs ) => {
+
+						resolve( tabs[ 0 ] );
+
+					});
+
+				});
+
+			},
+
 			send_to_all_tabs: function ( message ) {
 
 				chrome.tabs.query( {}, function ( tab_arr ) {
@@ -722,6 +736,8 @@
 
 	window[ window.webextension_library_name ].hub = function ( mode, options ) {
 
+		var x = window[ window.webextension_library_name ];
+
 		var state = {};
 		var events = {};
 		var complex_events = {};
@@ -769,28 +785,6 @@
 
 		};
 
-		function log_event ( source, listener, name, data ) {
-
-			if ( state.mode === "prod" ) {
-
-				// don't log events in production
-
-			} else if ( state.mode === "dev" ) {
-
-				if ( state.options.mute_in_log_event_name_arr.indexOf( name ) === -1 ) {
-
-					var title = "%c " + listener + " ( " + source + " )" + ": " + name;
-
-					console.groupCollapsed( title, "color: blue" );
-					console.log( data );
-					console.groupEnd();
-
-				};
-
-			};
-
-		};
-
 		return {
 
 			fire: function ( name, data ) {
@@ -802,7 +796,7 @@
 
 					events[ name ].forEach( function ( observer ) {
 
-						log_event( "hub", "listener", name, data );
+						x.log.log_event( "hub", "listener", name, data );
 						observer( data );
 
 					});
@@ -816,7 +810,7 @@
 
 					complex_events[ name ].forEach( function ( observer ) {
 
-						log_event( "hub", observer.observers_name, name, data );
+						x.log.log_event( "hub", observer.observers_name, name, data );
 						observer.observer_fn( data );
 
 					});
@@ -890,14 +884,14 @@
 
 							if ( observers[ "all" ] ) {
 
-								log_event( "window", context + " " + sender, name, data );
+								x.log.log_event( "window", context + " " + sender, name, data );
 								observers[ "all" ]( data, event );
 
 							};
 
 							if ( observers[ name ] ) {
 
-								log_event( "window", context + " " + sender, name, data );
+								x.log.log_event( "window", context + " " + sender, name, data );
 								observers[ name ]( data, event );
 
 							};
@@ -921,14 +915,14 @@
 
 						if ( observers[ "all" ] ) {
 
-							log_event( "runtime", observers_name, name, data );
+							x.log.log_event( "runtime", observers_name, name, data );
 							observers[ "all" ]( data, sender, callback );
 
 						};
 
 						if ( observers[ name ] ) {
 
-							log_event( "runtime", observers_name, name, data );
+							x.log.log_event( "runtime", observers_name, name, data );
 							observers[ name ]( data, sender, callback );
 
 						};
@@ -1017,72 +1011,358 @@
 
 	};
 
-	window[ window.webextension_library_name ].log = function ( mode ) {
+	window[ window.webextension_library_name ].log = ( function () {
 
-		var state = {};
+		var x = window[ window.webextension_library_name ];
 
-		state.mode = mode;
+		var state = {
+
+			log_item_arr: [],
+
+		};
+
+		var default_options = {
+
+			mute_in_log_event_name_arr: [],
+
+		};
+
+		// write log item
+
+		function write_log_item ( log_item ) {
+
+			if ( log_item.type === "normal" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.arguments[ 0 ];
+
+				console.groupCollapsed( title, "color: black" );
+
+				for ( var i = 1; i < log_item.arguments.length; i ++ ) {
+
+					console.log( log_item.arguments[ i ] );
+
+				};
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "conv_data" ) {
+
+				var conv_data = log_item.conv_data;
+				var title = "%c " + log_item.app_name + " | " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
+
+				if ( conv_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(conv_data.input);
+					console.log(conv_data.stack);
+
+				} else if (!conv_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(conv_data.input);
+
+				} else {
+
+					console.groupCollapsed( title, "color: green" );
+					console.log(conv_data.input);
+					console.log(conv_data.output);
+
+				}
+
+				conv_data.conv_data_arr.forEach( function ( conv_data ) {
+
+					write_log_item({
+
+						type: "conv_data",
+						conv_data: conv_data,
+
+					});
+
+				});
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "event" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.listener + " ( " + log_item.source + " )" + ": " + log_item.name;
+
+				console.groupCollapsed( title, "color: blue" );
+				console.log( log_item.data );
+				console.groupEnd();
+
+			};
+
+
+		};
+
+		// log type = normal
 
 		var fn = function () {
 
+			var log_item = {
+
+				type: "normal",
+				app_name: state.app.name,
+
+				arguments: x.convert( arguments, [[ "list_to_arr" ]] ),
+
+			};
+
+			x.report_manager.store_log_item( log_item ); 
+
 			if ( state.mode === "dev" ) {
 
-				console.log.apply( null, arguments );
+				write_log_item( log_item )
 
 			};
 
 		};
 
-		fn.set_mode = ( mode ) => {
+		// log type = conv_data
 
-			state.mode = mode;
+		fn.log_conv_data = function ( conv_data ) {
+
+			var log_item = {
+
+				type: "conv_data",
+				app_name: state.app.name,
+
+				conv_data,
+
+			};
+
+			x.report_manager.store_log_item( log_item );
+
+			if ( state.mode === "dev" ) {
+
+				write_log_item( log_item )
+
+			};
+
+		};
+
+		// log type = event
+
+		fn.log_event = function ( source, listener, name, data ) {
+
+			var log_item = {
+
+				type: "event",
+				app_name: state.app.name,
+
+				source,
+				listener,
+				name,
+				data,
+
+			};
+
+			if ( state.options.mute_in_log_event_name_arr.indexOf( log_item.name ) === -1 ) {
+
+				x.report_manager.store_log_item( log_item );
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item );
+
+				};
+
+			};
+
+		};
+
+		// utility function to log an array of log_item
+
+		fn.log_log_item_arr = function ( log_item_arr ) {
+
+			// console.log( "log_item_arr", log_item_arr );
+
+			for ( var i = 0; i < log_item_arr.length; i++ ) {
+
+				var log_item = x.convert( log_item_arr[ i ], [
+					[ "decode_json" ],
+				]);
+
+				// console.log( "log_item", log_item );
+
+				write_log_item( log_item );
+
+			};
+
+		};
+
+		// init
+
+		fn.init = function ( app, options ) {
+
+			state.app = app
+			state.mode = app.config.mode;
+			state.options = options || default_options;
 
 		};
 
 		return fn;
 
-	};
+	} () );
 
+	window[ window.webextension_library_name ].report_manager_hub = ( function () {
+
+		var x = window[ window.webextension_library_name ];
+
+		var _state = {
+
+			config: null,
+			log_item_arr: [],
+
+		};
+
+		var _pub = {
+
+			store_log_item ( data ) {
+
+				_state.log_item_arr.push( data.log_item );
+
+				if ( _state.log_item_arr.length > _state.config.report_config.max_log_item_arr_length ) {
+
+					_state.log_item_arr.splice( 0, 20 );
+
+				};
+
+			},
+
+			generate_webx_report ( data ) {
+
+				var webx_report = {};
+
+				webx_report.version = chrome.runtime.getManifest().version;
+				webx_report.version_name = chrome.runtime.getManifest().version_name;
+
+				webx_report.log_item_arr = _state.log_item_arr;
+
+				return webx_report;
+
+			},
+
+			download_webx_report ( data ) {
+
+				var webx_report = {};
+
+				webx_report.version = chrome.runtime.getManifest().version;
+				webx_report.version_name = chrome.runtime.getManifest().version_name;
+
+				webx_report.log_item_arr = _state.log_item_arr;
+
+				var json = x.util.encode_json( webx_report );
+				var blob = new Blob([ json ]);
+				var url = URL.createObjectURL( blob );
+
+				window.open( url );
+				x.util.download_file( data.report_name, url );
+
+			},
+
+			init: function ( config ) {
+
+				_state.config = config;
+
+				x.bg_api.register( "report_manager_hub", _pub );
+
+			},
+
+		};
+
+		return _pub;
+
+	} () );
+
+	window[ window.webextension_library_name ].report_manager = ( function () {
+
+		var x = window[ window.webextension_library_name ];
+
+		var _state = {
+
+		};
+
+		var _pub = {
+
+			store_log_item: function ( log_item ) {
+
+				if ( _state.config && _state.config.report_config && _state.config.report_config.active ) {
+
+					log_item = x.convert( log_item, [
+						[ "simplify" ],
+						[ "encode_json" ],
+					]);
+
+					x.bg_api.exec( "report_manager_hub", "store_log_item", {
+
+						log_item: log_item,
+
+					});
+
+				};
+
+			},
+
+			write_webx_report: function ( webx_report ) {
+
+				x.log.log_log_item_arr( webx_report.log_item_arr );
+
+			},
+
+			init: function ( config ) {
+
+				_state.config = config;
+
+			},
+
+		};
+
+		return _pub;
+
+	} () );
 	window[ window.webextension_library_name ].tester = ( function () {
 
 		var x = window[ window.webextension_library_name ];
 
 		return {
 
-			test_conv: function ( conv_name, json_url ) {
+			test_conv: async function ( conv_name, json_url ) {
 
-				x.ajax({ method: "get_json", url: json_url })
-				.then( function ( test_data ) {
+				var test_info = await x.ajax({ method: "get_json", url: json_url });
 
-					Object.keys( test_data ).forEach( function ( conv_fn_name ) {
+				var conv_fn_name_arr = Object.keys( test_info );
 
-						test_data[ conv_fn_name ].forEach( function ( test_data ) {
+				for ( var i = 0; i < conv_fn_name_arr.length; i++ ) {
 
-							var input_name = conv_fn_name.split( "_to_" )[ 0 ];
-							var output_name = conv_fn_name.split( "_to_" )[ 1 ];
+					var conv_fn_name = conv_fn_name_arr[ i ];
+					var test_data_arr = test_info[ conv_fn_name ];
 
-							Promise.all([
+					for ( var j = 0; j < test_data_arr.length; j++ ) {
 
-								x.tester.unserialize( test_data.input ),
-								x.tester.unserialize( test_data.output )
+						var test_data = test_data_arr[ j ];
 
-							]).then( function ( io ) {
+						var input_name = conv_fn_name.split( "_to_" )[ 0 ];
+						var output_name = conv_fn_name.split( "_to_" )[ 1 ];
 
-								var input = io[ 0 ];
-								var output = io[ 1 ];
+						var io = await Promise.all([
 
-								var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
-								var equal_bool = x.tester.compare( output, conv_data.output );
+							x.tester.unserialize( test_data.input ),
+							x.tester.unserialize( test_data.output )
 
-								x.tester.log_test_case( conv_data, input, output, equal_bool );
+						]);
 
-							});
+						var input = io[ 0 ];
+						var output = io[ 1 ];
 
-						});
+						var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
+						var equal_bool = x.tester.compare( output, conv_data.output );
 
-					});
+						x.tester.log_test_case( conv_data, input, output, equal_bool );
 
-				});
+					};
+
+				};
 
 			},
 
@@ -1131,6 +1411,19 @@
 						}).then( function ( json ) {
 
 							resolve( json );
+
+						});
+
+					} else if ( data.__link_to_this_text__ ) {
+
+						x.ajax({
+
+							method: "get_text",
+							url: data.__link_to_this_text__,
+
+						}).then( function ( text ) {
+
+							resolve( text );
 
 						});
 
@@ -1243,7 +1536,7 @@
 				console.log( output );
 				console.log( conv_data.output );
 
-				x.conv.log_conv_data( conv_data );
+				x.log.log_conv_data( conv_data );
 
 				console.groupEnd();
 
@@ -1682,7 +1975,6 @@
 										status: this.status,
 
 									},
-
 									data: this.response
 
 								});
@@ -1751,6 +2043,7 @@
 									status: this.status,
 
 								},
+								data: this.response,
 
 							});
 
@@ -2139,6 +2432,8 @@
 
 				observer.observe( root_element, { childList: true, subtree: true } );
 
+				return { observer: observer };
+
 			} else if ( method === "once" ) {
 
 				return new Promise( function ( resolve ) {
@@ -2307,18 +2602,26 @@
 
 			exec: function ( api_name, method_name, input ) {
 
-				return new Promise ( function ( resolve ) {
+				if ( chrome.extension.getBackgroundPage && chrome.extension.getBackgroundPage() === window ) {
 
-					chrome.runtime.sendMessage({
+					return api_hash[ api_name ][ method_name ]( input );
 
-						_target: "bg_api",
-						api_name: api_name,
-						method_name: method_name,
-						input: input
+				} else {
 
-					}, resolve );
+					return new Promise ( function ( resolve ) {
 
-				});
+						chrome.runtime.sendMessage({
+
+							_target: "bg_api",
+							api_name: api_name,
+							method_name: method_name,
+							input: input
+
+						}, resolve );
+
+					});
+
+				};
 
 			},
 
@@ -2484,7 +2787,7 @@
 
 					if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
 
-						x.conv.log_conv_data( conv_data );
+						x.log.log_conv_data( conv_data );
 
 					};
 
@@ -2516,39 +2819,6 @@
 
 			};
 
-			conv.log_conv_data = function ( conv_data ) {
-
-				var title = "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
-
-				if ( conv_data.error ) {
-
-					console.groupCollapsed( title, "color: red" );
-					console.log(conv_data.input);
-					console.log(conv_data.stack);
-
-				} else if (!conv_data.found) {
-
-					console.groupCollapsed( title, "color: #F0AD4E" );
-					console.log(conv_data.input);
-
-				} else {
-
-					console.groupCollapsed( title, "color: green" );
-					console.log(conv_data.input);
-					console.log(conv_data.output);
-
-				}
-
-				conv_data.conv_data_arr.forEach( function ( conv_data ) {
-
-					x.conv.log_conv_data( conv_data );
-
-				});
-
-				console.groupEnd();
-
-			};
-
 			conv.get_conv_data = conv_with_data;
 
 		// return
@@ -2558,6 +2828,8 @@
 	} () );
 
 	window[ window.webextension_library_name ].convert = ( function ( input, data_arr ) {
+
+		var x = window[ window.webextension_library_name ];
 
 		try {
 
@@ -2569,6 +2841,8 @@
 
 					conv_data = data_arr[ i ];
 
+					// object_property
+
 					if ( conv_data[ 0 ] === "object_property" ) {
 
 						output = output[ conv_data[ 1 ] ];
@@ -2576,6 +2850,14 @@
 					} else if ( conv_data[ 0 ] === "array_item" ) {
 
 						output = output[ conv_data[ 1 ] ];
+
+					}
+
+					// execute_method
+
+					else if ( conv_data[ 0 ] === "execute_method" ) {
+
+						output = output[ conv_data[ 1 ] ]( conv_data[ 2 ], conv_data[ 3 ], conv_data[ 4 ] );
 
 					} else if ( conv_data[ 0 ] === "match" ) {
 
@@ -2589,10 +2871,6 @@
 
 						output = output.getAttribute( conv_data[ 1 ] );
 
-					} else if ( conv_data[ 0 ] === "prepend" ) {
-
-						output = conv_data[ 1 ] + output;
-
 					} else if ( conv_data[ 0 ] === "trim" ) {
 
 						output = output.trim();
@@ -2605,6 +2883,14 @@
 
 						output = output.replace( conv_data[ 1 ], conv_data[ 2 ] );
 
+					}
+
+					// other
+
+					else if ( conv_data[ 0 ] === "prepend" ) {
+
+						output = conv_data[ 1 ] + output;
+
 					} else if ( conv_data[ 0 ] === "decode_uri" ) {
 
 						output = decodeURIComponent( output );
@@ -2613,9 +2899,108 @@
 
 						output = JSON.parse( output );
 
+					} else if ( conv_data[ 0 ] === "encode_json" ) {
+
+						output = JSON.stringify( output );
+
+					} else if ( conv_data[ 0 ] === "simplify" ) {
+
+						if (
+							output instanceof Function ||
+							output instanceof Element ||
+							output instanceof Window
+						) {
+
+							output = "***";
+
+						} else if ( typeof output === "object" && output !== null ) {
+
+							if ( typeof output.serialize === 'function' ) {
+
+								output = output.serialize();
+
+							} else if ( output instanceof Array ) {
+
+								var new_output = [];
+
+								output.forEach( ( output_item, index ) => {
+
+									new_output[ index ] = x.convert( output_item, [
+										[ "simplify" ],
+									]);
+
+								});
+
+								output = new_output;
+
+							} else if ( output.postMessage ) {
+
+								return "***";
+
+							} else {
+
+								var new_output = {};
+
+								Object.keys( output ).forEach( ( key ) => {
+
+									new_output[ key ] = x.convert( output[ key ], [
+										[ "simplify" ],
+									]);
+
+								});
+
+								output = new_output;
+
+							};
+
+						} else {
+
+							// don't do anything
+
+						};
+
+					} else if ( conv_data[ 0 ] === "clone" ) {
+
+						output = jQuery.extend( true, {}, output );
+
 					} else if ( conv_data[ 0 ] === "bool" ) {
 
 						output = !!output;
+
+					} else if ( conv_data[ 0 ] === "list_to_arr" ) {
+
+						var arr = [];
+
+						for ( var j = 0; j < output.length; j++ ) {
+
+							arr.push( output[ j ] );
+
+						};
+
+						output = arr;
+
+					} else if ( conv_data[ 0 ] === "concat" ) {
+
+						output = output.concat( conv_data[ 1 ] );
+
+					}
+
+					// map
+
+					else if ( conv_data[ 0 ] === "map" ) {
+
+						var new_arr = [];
+						var convesion_settings = conv_data[ 1 ];
+
+						for ( var j = 0; j < output.length; j++ ) {
+
+							var new_output_item = x.convert( output[ j ], convesion_settings );
+
+							new_arr.push( new_output_item );
+
+						};
+
+						output = new_arr;
 
 					};
 
@@ -2630,6 +3015,5 @@
 			return null;
 
 		};
-
 
 	});

@@ -153,6 +153,20 @@
 
 			},
 
+			get_active_tab: () => {
+
+				return new Promise( ( resolve ) => {
+
+					chrome.tabs.query({ active: true, currentWindow: true }, ( tabs ) => {
+
+						resolve( tabs[ 0 ] );
+
+					});
+
+				});
+
+			},
+
 			send_to_all_tabs: function ( message ) {
 
 				chrome.tabs.query( {}, function ( tab_arr ) {

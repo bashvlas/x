@@ -5,40 +5,42 @@
 
 		return {
 
-			test_conv: function ( conv_name, json_url ) {
+			test_conv: async function ( conv_name, json_url ) {
 
-				x.ajax({ method: "get_json", url: json_url })
-				.then( function ( test_data ) {
+				var test_info = await x.ajax({ method: "get_json", url: json_url });
 
-					Object.keys( test_data ).forEach( function ( conv_fn_name ) {
+				var conv_fn_name_arr = Object.keys( test_info );
 
-						test_data[ conv_fn_name ].forEach( function ( test_data ) {
+				for ( var i = 0; i < conv_fn_name_arr.length; i++ ) {
 
-							var input_name = conv_fn_name.split( "_to_" )[ 0 ];
-							var output_name = conv_fn_name.split( "_to_" )[ 1 ];
+					var conv_fn_name = conv_fn_name_arr[ i ];
+					var test_data_arr = test_info[ conv_fn_name ];
 
-							Promise.all([
+					for ( var j = 0; j < test_data_arr.length; j++ ) {
 
-								x.tester.unserialize( test_data.input ),
-								x.tester.unserialize( test_data.output )
+						var test_data = test_data_arr[ j ];
 
-							]).then( function ( io ) {
+						var input_name = conv_fn_name.split( "_to_" )[ 0 ];
+						var output_name = conv_fn_name.split( "_to_" )[ 1 ];
 
-								var input = io[ 0 ];
-								var output = io[ 1 ];
+						var io = await Promise.all([
 
-								var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
-								var equal_bool = x.tester.compare( output, conv_data.output );
+							x.tester.unserialize( test_data.input ),
+							x.tester.unserialize( test_data.output )
 
-								x.tester.log_test_case( conv_data, input, output, equal_bool );
+						]);
 
-							});
+						var input = io[ 0 ];
+						var output = io[ 1 ];
 
-						});
+						var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
+						var equal_bool = x.tester.compare( output, conv_data.output );
 
-					});
+						x.tester.log_test_case( conv_data, input, output, equal_bool );
 
-				});
+					};
+
+				};
 
 			},
 
@@ -87,6 +89,19 @@
 						}).then( function ( json ) {
 
 							resolve( json );
+
+						});
+
+					} else if ( data.__link_to_this_text__ ) {
+
+						x.ajax({
+
+							method: "get_text",
+							url: data.__link_to_this_text__,
+
+						}).then( function ( text ) {
+
+							resolve( text );
 
 						});
 
@@ -199,7 +214,7 @@
 				console.log( output );
 				console.log( conv_data.output );
 
-				x.conv.log_conv_data( conv_data );
+				x.log.log_conv_data( conv_data );
 
 				console.groupEnd();
 
