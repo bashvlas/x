@@ -338,6 +338,14 @@
 
 						output = !!output;
 
+					}  else if ( conv_data[ 0 ] === "if_falsy" ) {
+
+						if ( !output ) {
+
+							output = conv_data[ 1 ];
+
+						};
+
 					} else if ( conv_data[ 0 ] === "list_to_arr" ) {
 
 						var arr = [];

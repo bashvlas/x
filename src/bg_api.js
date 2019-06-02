@@ -7,34 +7,40 @@
 
 		};
 
+		var x = window[ window.webextension_library_name ];
+
 		var api_hash = {};
 
-		chrome.runtime.onMessage.addListener( function ( message, sender, callback ) {
+		return {
 
-			if ( message._target === "bg_api" ) {
+			init: function () {
 
-				if ( api_hash[ message.api_name ] && api_hash[ message.api_name ][ message.method_name ] ) {
+				chrome.runtime.onMessage.addListener( function ( message, sender, callback ) {
 
-					var output = api_hash[ message.api_name ][ message.method_name ]( message.input, sender );
+					if ( message._target === "bg_api" ) {
 
-					if ( output instanceof Promise ) {
+						if ( api_hash[ message.api_name ] && api_hash[ message.api_name ][ message.method_name ] ) {
 
-						output.then( callback );
-						return true;
+							var output = api_hash[ message.api_name ][ message.method_name ]( message.input, sender );
 
-					} else {
+							if ( output instanceof Promise ) {
 
-						callback( output );
+								output.then( callback );
+								return true;
+
+							} else {
+
+								callback( output );
+
+							};
+
+						};
 
 					};
 
-				};
+				});
 
-			};
-
-		});
-
-		return {
+			},
 
 			register: function ( api_name, method_hash ) {
 
@@ -52,14 +58,22 @@
 
 					return new Promise ( function ( resolve ) {
 
-						chrome.runtime.sendMessage({
+						try {
 
-							_target: "bg_api",
-							api_name: api_name,
-							method_name: method_name,
-							input: input
+							chrome.runtime.sendMessage({
 
-						}, resolve );
+								_target: "bg_api",
+								api_name: api_name,
+								method_name: method_name,
+								input: input
+
+							}, resolve );
+
+						} catch ( e ) {
+
+							x.log( "error while sending bg message", e );
+
+						};
 
 					});
 

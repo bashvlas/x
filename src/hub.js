@@ -332,7 +332,20 @@
 					console.log(conv_data.input);
 					console.log(conv_data.output);
 
-				}
+				};
+
+				// log simple string for testing
+
+					console.groupCollapsed( title, "color: grey" );
+
+					console.log( JSON.stringify({
+
+						input: conv_data.input,
+						output: conv_data.output,
+
+					}, null, "\t" ) );
+
+					console.groupEnd();
 
 				conv_data.conv_data_arr.forEach( function ( conv_data ) {
 
