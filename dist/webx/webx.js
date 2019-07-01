@@ -3,6 +3,7 @@
 
 		window.webextension_library_name = global_name;
 		window[ global_name ] = {};
+		window[ global_name ].modules = {};
 
 	} ( "webextension_library" ) );
 	window[ window.webextension_library_name ].util = ( function () {
@@ -3201,6 +3202,169 @@
 		};
 
 	} () );
+
+	window[ window.webextension_library_name ].modules.chrome = function () {
+
+		function callback_handler ( resolve, response ) {
+
+			if ( chrome.runtime.lastError ) {
+
+				console.log( chrome.runtime.lastError );
+
+				resolve( null );
+
+			} else {
+
+				resolve( response );
+
+			};
+
+		};
+
+		return {
+
+			call: function () {
+
+				return new Promise( ( resolve ) => {
+
+					var path = arguments[ 0 ];
+					var path_arr = path.split( "." );
+					var object = chrome;
+					var object_context = chrome;
+
+					for ( var i = 0; i < path_arr.length; i++ ) {
+
+						object = object[ path_arr[ i ] ];
+
+					};
+
+					for ( var i = 0; i < path_arr.length - 1; i++ ) {
+
+						object_context = object_context[ path_arr[ i ] ];
+
+					};
+
+					var new_arguments = [];
+
+					for ( var i = 0; i < arguments.length; i++ ) {
+
+						new_arguments.push( arguments[ i ] );
+
+					};
+
+					new_arguments.push( callback_handler.bind( null, resolve ) );
+
+					object.apply( object_context, new_arguments.slice( 1 ) );
+
+				});
+
+			},
+
+		};
+
+	};
+
+	window[ window.webextension_library_name ].modules.state = function () {
+
+		var state = {};
+
+		return {
+
+			get: function ( property_path ) {
+
+				var path_item_arr = property_path.split( "." );
+				var output = state;
+
+				for ( var i = 0; i < path_item_arr.length; i++ ) {
+
+					if ( output[ path_item_arr[ i ] ] ) {
+
+					} else {
+
+						output = null;
+
+					};
+
+				};
+
+				return output
+
+			},
+
+			set: function ( property_path, value ) {
+
+			},
+
+		};
+
+	};
+
+	window[ window.webextension_library_name ].modules.exec = function () {
+
+		var modules = {
+
+		};
+
+		var _priv = {
+
+			exec: function () {
+
+				var module_name = arguments[ 0 ];
+				var method_name = arguments[ 1 ];
+
+				var new_arguments = [];
+
+				for ( var i = 0; i < arguments.length; i++ ) {
+
+					new_arguments.push( arguments[ i ] );
+
+				};
+
+				new_arguments.push( _priv.exec );
+
+				var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
+
+				if ( output && typeof output.then === 'function' ) {
+
+					output.then( ( result ) => {
+
+						console.log( "exec", new_arguments, result );
+
+					})
+
+					return output;
+
+				} else {
+
+					console.log( "exec", new_arguments, output );
+
+					return output;
+
+				};
+
+			},
+
+		};
+
+		var pub = {
+
+			get_exec: () => {
+
+				return _priv.exec;
+
+			},
+
+			add_module: ( name, module ) => {
+
+				modules[ name ] = module;
+
+			},
+
+		};
+
+		return pub;
+
+	};
 	window[ window.webextension_library_name ].cache_manager = function () {
 
 		// cache_item[ 0 ] - id
