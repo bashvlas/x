@@ -1,9 +1,16 @@
 
-	window[ window.webextension_library_name ].tester = ( function () {
+	window[ window.webextension_library_name ].tester = function () {
 
 		var x = window[ window.webextension_library_name ];
+		var _app = null;
 
-		return {
+		var _pub = {
+
+			init: function ( app ) {
+
+				_app = app;
+
+			},
 
 			test_conv: async function ( conv_name, json_url ) {
 
@@ -25,8 +32,8 @@
 
 						var io = await Promise.all([
 
-							x.tester.unserialize( test_data.input ),
-							x.tester.unserialize( test_data.output )
+							_pub.unserialize( test_data.input ),
+							_pub.unserialize( test_data.output )
 
 						]);
 
@@ -34,9 +41,9 @@
 						var output = io[ 1 ];
 
 						var conv_data = x.conv.get_conv_data( conv_name, input_name, output_name, input );
-						var equal_bool = x.tester.compare( output, conv_data.output );
+						var equal_bool = _pub.compare( output, conv_data.output );
 
-						x.tester.log_test_case( conv_data, input, output, equal_bool );
+						_pub.log_test_case( conv_data, input, output, equal_bool );
 
 					};
 
@@ -54,7 +61,7 @@
 
 					} else if ( data.__serial_type__ === "element" ) {
 
-						resolve( x.tester.html_to_element( data.html ) );
+						resolve( _pub.html_to_element( data.html ) );
 
 					} else if ( data.__serial_type__ === "date" ) {
 
@@ -112,7 +119,7 @@
 
 						Object.keys( data ).forEach( function ( key ) {
 
-							x.tester.unserialize( data[ key ] )
+							_pub.unserialize( data[ key ] )
 							.then( function ( value ) {
 
 								data[ key ] = value;
@@ -172,7 +179,7 @@
 
 					for ( var i = key_arr_1.length; i--; ) {
 
-						equal = x.tester.compare( obj_1[ key_arr_1[ i ] ], obj_2[ key_arr_1[ i ] ] );
+						equal = _pub.compare( obj_1[ key_arr_1[ i ] ], obj_2[ key_arr_1[ i ] ] );
 
 						if ( equal === false ) {
 
@@ -184,7 +191,7 @@
 
 					for ( var i = key_arr_2.length; i--; ) {
 
-						equal = x.tester.compare( obj_1[ key_arr_2[ i ] ], obj_2[ key_arr_2[ i ] ] );
+						equal = _pub.compare( obj_1[ key_arr_2[ i ] ], obj_2[ key_arr_2[ i ] ] );
 
 						if ( equal === false ) {
 
@@ -210,11 +217,14 @@
 
 				console.groupCollapsed( "%c " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name, style );
 
+				console.log( "input" );
 				console.log( input );
+				console.log( "expected output" );
 				console.log( output );
+				console.log( "actual output" );
 				console.log( conv_data.output );
 
-				x.log.log_conv_data( conv_data );
+				_app.log.log_conv_data( conv_data );
 
 				console.groupEnd();
 
@@ -222,4 +232,6 @@
 
 		};
 
-	} () );
+		return _pub;
+
+	};

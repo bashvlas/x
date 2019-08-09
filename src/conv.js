@@ -4,6 +4,7 @@
 		// define x
 
 			var x = window[ window.webextension_library_name ];
+			var _app = null;
 
 		// vars
 
@@ -158,7 +159,7 @@
 
 					if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
 
-						x.log.log_conv_data( conv_data );
+						_app.log.log_conv_data( conv_data );
 
 					};
 
@@ -185,6 +186,8 @@
 			};
 
 			conv.set_options = function ( new_options ) {
+
+				_app = new_options.app;
 
 				options = new_options;
 
@@ -276,7 +279,13 @@
 
 					} else if ( conv_data[ 0 ] === "simplify" ) {
 
-						if (
+						var depth = conv_data[ 1 ];
+
+						if ( typeof depth !== "number" || depth === 0 ) {
+
+							return "...";
+
+						} else if (
 							output instanceof Function ||
 							output instanceof Element ||
 							output instanceof Window
@@ -297,7 +306,7 @@
 								output.forEach( ( output_item, index ) => {
 
 									new_output[ index ] = x.convert( output_item, [
-										[ "simplify" ],
+										[ "simplify", depth - 1 ],
 									]);
 
 								});
@@ -315,7 +324,7 @@
 								Object.keys( output ).forEach( ( key ) => {
 
 									new_output[ key ] = x.convert( output[ key ], [
-										[ "simplify" ],
+										[ "simplify", depth - 1 ],
 									]);
 
 								});
