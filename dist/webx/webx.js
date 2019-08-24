@@ -2632,207 +2632,6 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.pure = function () {
-
-		// define x
-
-			var x = window[ window.webextension_library_name ];
-			var _app = null;
-
-		// vars
-
-			var converters_hash = {};
-			var options = {
-
-				silence: [],
-
-			};
-
-		// util functions
-
-			var conv_with_data = ( function () {
-
-				var conv = function( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-					var conv_name = from_name + "_to_" + to_name;
-					var conv_data = {
-
-						namespace: namespace,
-						from_name: from_name,
-						to_name: to_name,
-
-						conv_data_arr: [],
-						found: true,
-
-						input: input,
-						output: undefined,
-
-					};
-
-					function pseudo_conv ( namespace, from_name, to_name, input ) {
-
-						var local_conv_data = conv( namespace, from_name, to_name, input );
-						conv_data.conv_data_arr.push( local_conv_data );
-
-						return local_conv_data.output;
-
-					};
-
-					if ( conv_hash[ conv_name ] ) {
-
-						try {
-
-							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
-
-							if (conv_data.output instanceof Promise) {
-
-								conv_data.output = new Promise( function ( resolve ) {
-
-									conv_data.output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											conv_data.error = true;
-											conv_data.stack = error.stack;
-
-										});
-
-								});
-
-							};
-
-						} catch ( error ) {
-
-							conv_data.error = true;
-							conv_data.stack = error.stack;
-
-						};
-
-					} else {
-
-						conv_data.found = false;
-
-					};
-
-					return conv_data;
-
-				};
-
-				return conv;
-
-			} () );
-
-			var conv_no_data = ( function () {
-
-				var conv = function ( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-
-					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
-
-						try {
-
-							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
-
-							if (output instanceof Promise) {
-
-								return new Promise( function( resolve, reject ) {
-
-									output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											resolve(undefined);
-
-										});
-
-								});
-
-							} else {
-
-								return output;
-
-							};
-
-						} catch ( error ) {
-
-							return undefined;
-
-						};
-
-					} else {
-
-						return undefined;
-
-					};
-
-				};
-
-				return conv;
-
-			} () );
-
-		// public functions
-
-			var _pub = {
-
-				init: function ( app ) {
-
-					_app = app;
-
-				},
-
-				set_options: function ( new_options ) {
-
-					options = new_options;
-
-				},
-
-				register: function ( namespace, hash ) {
-
-					converters_hash[ namespace ] = hash;
-
-				},
-
-				call: function ( namespace, from_name, to_name, input ) {
-
-					if ( _app.config.mode === "dev" ) {
-
-						var conv_data = conv_with_data( namespace, from_name, to_name, input );
-
-						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
-
-							_app.log.log_conv_data( conv_data );
-
-						};
-
-						return conv_data.output;
-
-					} else {
-
-						return conv_no_data( namespace, from_name, to_name, input );
-
-					};
-
-				},
-
-			};
-
-		// return
-
-			return _pub;
-
-	};
-
 	window[ window.webextension_library_name ].modules.exec_tester = function () {
 
 		var x = window[ window.webextension_library_name ];
@@ -4036,6 +3835,207 @@
 
 	};
 
+	window[ window.webextension_library_name ].modules.pure = function () {
+
+		// define x
+
+			var x = window[ window.webextension_library_name ];
+			var _app = null;
+
+		// vars
+
+			var converters_hash = {};
+			var options = {
+
+				silence: [],
+
+			};
+
+		// util functions
+
+			var conv_with_data = ( function () {
+
+				var conv = function( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+					var conv_name = from_name + "_to_" + to_name;
+					var conv_data = {
+
+						namespace: namespace,
+						from_name: from_name,
+						to_name: to_name,
+
+						conv_data_arr: [],
+						found: true,
+
+						input: input,
+						output: undefined,
+
+					};
+
+					function pseudo_conv ( namespace, from_name, to_name, input ) {
+
+						var local_conv_data = conv( namespace, from_name, to_name, input );
+						conv_data.conv_data_arr.push( local_conv_data );
+
+						return local_conv_data.output;
+
+					};
+
+					if ( conv_hash[ conv_name ] ) {
+
+						try {
+
+							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
+
+							if (conv_data.output instanceof Promise) {
+
+								conv_data.output = new Promise( function ( resolve ) {
+
+									conv_data.output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											conv_data.error = true;
+											conv_data.stack = error.stack;
+
+										});
+
+								});
+
+							};
+
+						} catch ( error ) {
+
+							conv_data.error = true;
+							conv_data.stack = error.stack;
+
+						};
+
+					} else {
+
+						conv_data.found = false;
+
+					};
+
+					return conv_data;
+
+				};
+
+				return conv;
+
+			} () );
+
+			var conv_no_data = ( function () {
+
+				var conv = function ( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+
+					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
+
+						try {
+
+							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
+
+							if (output instanceof Promise) {
+
+								return new Promise( function( resolve, reject ) {
+
+									output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											resolve(undefined);
+
+										});
+
+								});
+
+							} else {
+
+								return output;
+
+							};
+
+						} catch ( error ) {
+
+							return undefined;
+
+						};
+
+					} else {
+
+						return undefined;
+
+					};
+
+				};
+
+				return conv;
+
+			} () );
+
+		// public functions
+
+			var _pub = {
+
+				init: function ( app ) {
+
+					_app = app;
+
+				},
+
+				set_options: function ( new_options ) {
+
+					options = new_options;
+
+				},
+
+				register: function ( namespace, hash ) {
+
+					converters_hash[ namespace ] = hash;
+
+				},
+
+				call: function ( namespace, from_name, to_name, input ) {
+
+					if ( _app.config.mode === "dev" ) {
+
+						var conv_data = conv_with_data( namespace, from_name, to_name, input );
+
+						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
+
+							_app.log.log_conv_data( conv_data );
+
+						};
+
+						return conv_data.output;
+
+					} else {
+
+						return conv_no_data( namespace, from_name, to_name, input );
+
+					};
+
+				},
+
+			};
+
+		// return
+
+			return _pub;
+
+	};
+
 	window[ window.webextension_library_name ].modules.exec = function () {
 
 		var modules = {
@@ -4149,55 +4149,53 @@
 
 			var exec_no_data = ( function () {
 
-				var conv = function ( namespace, from_name, to_name, input ) {
+				var exec = function () {
 
-					var conv_hash = converters_hash[ namespace ];
+					var module_name = arguments[ 0 ];
+					var method_name = arguments[ 1 ];
 
-					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
+					var new_arguments = [];
 
-						try {
+					for ( var i = 0; i < arguments.length; i++ ) {
 
-							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
+						new_arguments.push( arguments[ i ] );
 
-							if (output instanceof Promise) {
+					};
 
-								return new Promise( function( resolve, reject ) {
+					new_arguments.push( _priv.exec );
 
-									output
-										.then(function(output) {
+					var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
 
-											resolve(output);
+					if ( output && typeof output.then === 'function' ) {
 
-										})
-										.catch(function(error) {
+						return new Promise( ( resolve ) => {
 
-											resolve(undefined);
+							output.then( ( result ) => {
 
-										});
+								// console.log( "exec_end", new_arguments, result );
 
-								});
+								resolve( output );
 
-							} else {
+							}).catch( ( error ) => {
 
-								return output;
+								console.log( module_name, method_name );
+								console.log( error );
 
-							};
+								resolve( null );
 
-						} catch ( error ) {
+							});
 
-							return undefined;
-
-						};
+						});
 
 					} else {
 
-						return undefined;
+						return output;
 
 					};
 
 				};
 
-				return conv;
+				return exec;
 
 			} () );
 
@@ -4207,61 +4205,29 @@
 
 			exec: function () {
 
-				var exec_data = exec_with_data.apply( null, arguments );
+				if ( _app.config.mode === "dev" ) {
 
-				console.log( "exec_data", exec_data );
+					var exec_data = exec_with_data.apply( null, arguments );
 
-				_app.log.log_exec_data( exec_data );
+					if ( exec_data.output instanceof Promise ) {
 
-				return exec_data.output;
+						exec_data.output.then( () => {
 
-				return;
-
-				var module_name = arguments[ 0 ];
-				var method_name = arguments[ 1 ];
-
-				console.log( "exec_start", module_name, method_name );
-
-				var new_arguments = [];
-
-				for ( var i = 0; i < arguments.length; i++ ) {
-
-					new_arguments.push( arguments[ i ] );
-
-				};
-
-				new_arguments.push( _priv.exec );
-
-				var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
-
-				console.log( "exec_output", module_name, method_name, output)
-
-				if ( output && typeof output.then === 'function' ) {
-
-					return new Promise( ( resolve ) => {
-
-						output.then( ( result ) => {
-
-							// console.log( "exec_end", new_arguments, result );
-
-							resolve( output );
-
-						}).catch( ( error ) => {
-
-							console.log( module_name, method_name );
-							console.log( error );
-
-							resolve( null );
+							_app.log.log_exec_data( exec_data );
 
 						});
 
-					});
+					} else {
+
+						_app.log.log_exec_data( exec_data );
+
+					};
+
+					return exec_data.output;
 
 				} else {
 
-					console.log( "exec_end", new_arguments, output );
-
-					return output;
+					return exec_no_data.apply( arguments );
 
 				};
 
@@ -4397,7 +4363,7 @@
 
 				} else {
 
-					console.groupCollapsed( title, "color: #00796B" );
+					console.groupCollapsed( title, "color: #5D4037" );
 					console.log(exec_data.arguments);
 					console.log(exec_data.output);
 
