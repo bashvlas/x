@@ -157,7 +157,7 @@
 
 			if ( chrome.runtime.lastError ) {
 
-				_app.log( "runtime_last_error", path, chrome.runtime.lastError );
+				_app.log.write( "runtime_last_error", path, chrome.runtime.lastError );
 
 				resolve( null );
 
@@ -240,84 +240,204 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.exec = function () {
+	window[ window.webextension_library_name ].modules.pure = function () {
 
-		var modules = {
+		// define x
 
-		};
+			var x = window[ window.webextension_library_name ];
+			var _app = null;
 
-		var _priv = {
+		// vars
 
-			exec: function () {
+			var converters_hash = {};
+			var options = {
 
-				var module_name = arguments[ 0 ];
-				var method_name = arguments[ 1 ];
+				silence: [],
 
-				// console.log( "exec_start", module_name, method_name );
+			};
 
-				var new_arguments = [];
+		// util functions
 
-				for ( var i = 0; i < arguments.length; i++ ) {
+			var conv_with_data = ( function () {
 
-					new_arguments.push( arguments[ i ] );
+				var conv = function( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+					var conv_name = from_name + "_to_" + to_name;
+					var conv_data = {
+
+						namespace: namespace,
+						from_name: from_name,
+						to_name: to_name,
+
+						conv_data_arr: [],
+						found: true,
+
+						input: input,
+						output: undefined,
+
+					};
+
+					function pseudo_conv ( namespace, from_name, to_name, input ) {
+
+						var local_conv_data = conv( namespace, from_name, to_name, input );
+						conv_data.conv_data_arr.push( local_conv_data );
+
+						return local_conv_data.output;
+
+					};
+
+					if ( conv_hash[ conv_name ] ) {
+
+						try {
+
+							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
+
+							if (conv_data.output instanceof Promise) {
+
+								conv_data.output = new Promise( function ( resolve ) {
+
+									conv_data.output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											conv_data.error = true;
+											conv_data.stack = error.stack;
+
+										});
+
+								});
+
+							};
+
+						} catch ( error ) {
+
+							conv_data.error = true;
+							conv_data.stack = error.stack;
+
+						};
+
+					} else {
+
+						conv_data.found = false;
+
+					};
+
+					return conv_data;
 
 				};
 
-				new_arguments.push( _priv.exec );
+				return conv;
 
-				var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
+			} () );
 
-				// console.log( "exec_output", module_name, method_name, output)
+			var conv_no_data = ( function () {
 
-				if ( output && typeof output.then === 'function' ) {
+				var conv = function ( namespace, from_name, to_name, input ) {
 
-					return new Promise( ( resolve ) => {
+					var conv_hash = converters_hash[ namespace ];
 
-						output.then( ( result ) => {
+					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
 
-							// console.log( "exec_end", new_arguments, result );
+						try {
 
-							resolve( output );
+							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
 
-						}).catch( ( error ) => {
+							if (output instanceof Promise) {
 
-							console.log( error );
+								return new Promise( function( resolve, reject ) {
 
-							resolve( null );
+									output
+										.then(function(output) {
 
-						});
+											resolve(output);
 
-					});
+										})
+										.catch(function(error) {
 
-				} else {
+											resolve(undefined);
 
-					// console.log( "exec_end", new_arguments, output );
+										});
 
-					return output;
+								});
+
+							} else {
+
+								return output;
+
+							};
+
+						} catch ( error ) {
+
+							return undefined;
+
+						};
+
+					} else {
+
+						return undefined;
+
+					};
 
 				};
 
-			},
+				return conv;
 
-		};
+			} () );
 
-		var pub = {
+		// public functions
 
-			get_exec: () => {
+			var _pub = {
 
-				return _priv.exec;
+				init: function ( app ) {
 
-			},
+					_app = app;
 
-			add_module: ( name, module ) => {
+				},
 
-				modules[ name ] = module;
+				set_options: function ( new_options ) {
 
-			},
+					options = new_options;
 
-		};
+				},
 
-		return pub;
+				register: function ( namespace, hash ) {
+
+					converters_hash[ namespace ] = hash;
+
+				},
+
+				call: function ( namespace, from_name, to_name, input ) {
+
+					if ( _app.config.mode === "dev" ) {
+
+						var conv_data = conv_with_data( namespace, from_name, to_name, input );
+
+						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
+
+							_app.log.log_conv_data( conv_data );
+
+						};
+
+						return conv_data.output;
+
+					} else {
+
+						return conv_no_data( namespace, from_name, to_name, input );
+
+					};
+
+				},
+
+			};
+
+		// return
+
+			return _pub;
 
 	};
 
@@ -932,225 +1052,6 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.log = function () {
-
-		var x = window[ window.webextension_library_name ];
-
-		var state = {
-
-			log_item_arr: [],
-
-		};
-
-		var default_options = {
-
-			mute_in_log_event_name_arr: [],
-
-		};
-
-		// write log item
-
-		function write_log_item ( log_item ) {
-
-			if ( log_item.type === "normal" ) {
-
-				var title = "%c " + log_item.app_name + " | " + log_item.arguments[ 0 ];
-
-				console.groupCollapsed( title, "color: black" );
-
-				for ( var i = 1; i < log_item.arguments.length; i ++ ) {
-
-					console.log( log_item.arguments[ i ] );
-
-				};
-
-				console.groupEnd();
-
-			} else if ( log_item.type === "conv_data" ) {
-
-				var conv_data = log_item.conv_data;
-				var title = "%c " + log_item.app_name + " | " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
-
-				if ( conv_data.error ) {
-
-					console.groupCollapsed( title, "color: red" );
-					console.log(conv_data.input);
-					console.log(conv_data.stack);
-
-				} else if (!conv_data.found) {
-
-					console.groupCollapsed( title, "color: #F0AD4E" );
-					console.log(conv_data.input);
-
-				} else {
-
-					console.groupCollapsed( title, "color: green" );
-					console.log(conv_data.input);
-					console.log(conv_data.output);
-
-				};
-
-				// log simple string for testing
-
-					console.groupCollapsed( title, "color: grey" );
-
-					console.log( JSON.stringify({
-
-						input: conv_data.input,
-						output: conv_data.output,
-
-					}, null, "\t" ) );
-
-					console.groupEnd();
-
-				conv_data.conv_data_arr.forEach( function ( conv_data ) {
-
-					write_log_item({
-
-						type: "conv_data",
-						conv_data: conv_data,
-
-					});
-
-				});
-
-				console.groupEnd();
-
-			} else if ( log_item.type === "event" ) {
-
-				var title = "%c " + log_item.app_name + " | " + log_item.listener + " ( " + log_item.source + " )" + ": " + log_item.name;
-
-				console.groupCollapsed( title, "color: blue" );
-				console.log( log_item.data );
-				console.groupEnd();
-
-			};
-
-
-		};
-
-		// log type = normal
-
-		var fn = function () {
-
-			var log_item = {
-
-				type: "normal",
-				app_name: state.app.name,
-
-				arguments: x.convert( arguments, [[ "list_to_arr" ]] ),
-
-			};
-
-			if ( state.app.report_manager ) {
-
-				state.app.report_manager.store_log_item( log_item ); 
-
-			};
-
-			if ( state.mode === "dev" ) {
-
-				write_log_item( log_item )
-
-			};
-
-		};
-
-		// log type = conv_data
-
-		fn.log_conv_data = function ( conv_data ) {
-
-			var log_item = {
-
-				type: "conv_data",
-				app_name: state.app.name,
-
-				conv_data,
-
-			};
-
-			if ( state.app.report_manager ) {
-
-				state.app.report_manager.store_log_item( log_item );
-
-			};
-
-			if ( state.mode === "dev" ) {
-
-				write_log_item( log_item )
-
-			};
-
-		};
-
-		// log type = event
-
-		fn.log_event = function ( source, listener, name, data ) {
-
-			var log_item = {
-
-				type: "event",
-				app_name: state.app.name,
-
-				source,
-				listener,
-				name,
-				data,
-
-			};
-
-			if ( state.options.mute_in_log_event_name_arr.indexOf( log_item.name ) === -1 ) {
-
-				if ( state.app.report_manager ) {
-
-					state.app.report_manager.store_log_item( log_item );
-
-				};
-
-				if ( state.mode === "dev" ) {
-
-					write_log_item( log_item );
-
-				};
-
-			};
-
-		};
-
-		// utility function to log an array of log_item
-
-		fn.log_log_item_arr = function ( log_item_arr ) {
-
-			// console.log( "log_item_arr", log_item_arr );
-
-			for ( var i = 0; i < log_item_arr.length; i++ ) {
-
-				var log_item = x.convert( log_item_arr[ i ], [
-					[ "decode_json" ],
-				]);
-
-				// console.log( "log_item", log_item );
-
-				write_log_item( log_item );
-
-			};
-
-		};
-
-		// init
-
-		fn.init = function ( app, options ) {
-
-			state.app = app
-			state.mode = app.config.mode;
-			state.options = options || default_options;
-
-		};
-
-		return fn;
-
-	};
-
 	window[ window.webextension_library_name ].modules.report_manager_hub = function () {
 
 		var x = window[ window.webextension_library_name ];
@@ -1383,7 +1284,7 @@
 
 				} else {
 
-					_state.app.log( "Could not send a message to the iframe" );
+					_state.app.log.write( "Could not send a message to the iframe" );
 
 				};
 
@@ -1442,208 +1343,6 @@
 		};
 
 		return _pub;			
-
-	};
-
-	window[ window.webextension_library_name ].modules.pure = function () {
-
-		// define x
-
-			var x = window[ window.webextension_library_name ];
-			var _app = null;
-
-		// vars
-
-			var converters_hash = {};
-			var options = {
-
-				silence: [],
-
-			};
-
-		// util functions
-
-			var conv_with_data = ( function () {
-
-				var conv = function( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-					var conv_name = from_name + "_to_" + to_name;
-					var conv_data = {
-
-						namespace: namespace,
-						from_name: from_name,
-						to_name: to_name,
-
-						conv_data_arr: [],
-						found: true,
-
-						input: input,
-						output: undefined,
-
-					};
-
-					function pseudo_conv ( namespace, from_name, to_name, input ) {
-
-						var local_conv_data = conv( namespace, from_name, to_name, input );
-						conv_data.conv_data_arr.push( local_conv_data );
-
-						return local_conv_data.output;
-
-					};
-
-					if ( conv_hash[ conv_name ] ) {
-
-						try {
-
-							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
-
-							if (conv_data.output instanceof Promise) {
-
-								conv_data.output = new Promise( function ( resolve ) {
-
-									conv_data.output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											conv_data.error = true;
-											conv_data.stack = error.stack;
-
-										});
-
-								});
-
-							};
-
-						} catch ( error ) {
-
-							conv_data.error = true;
-							conv_data.stack = error.stack;
-
-						};
-
-					} else {
-
-						conv_data.found = false;
-
-					};
-
-					return conv_data;
-
-				};
-
-				return conv;
-
-			} () );
-
-			var conv_no_data = ( function () {
-
-				var conv = function ( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-
-					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
-
-						try {
-
-							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
-
-							if (output instanceof Promise) {
-
-								return new Promise( function( resolve, reject ) {
-
-									output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											resolve(undefined);
-
-										});
-
-								});
-
-							} else {
-
-								return output;
-
-							};
-
-						} catch ( error ) {
-
-							return undefined;
-
-						};
-
-					} else {
-
-						return undefined;
-
-					};
-
-				};
-
-				return conv;
-
-			} () );
-
-
-		// public functions
-
-			var _pub = {
-
-				init: function ( app ) {
-
-					_app = app;
-
-				},
-
-				set_options: function ( new_options ) {
-
-					options = new_options;
-
-				},
-
-				register: function ( namespace, hash ) {
-
-					converters_hash[ namespace ] = hash;
-
-				},
-
-				call: function ( namespace, from_name, to_name, input ) {
-
-					if ( _app.config.mode === "dev" ) {
-
-						var conv_data = conv_with_data( namespace, from_name, to_name, input );
-
-						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
-
-							_app.log.log_conv_data( conv_data );
-
-						};
-
-						return conv_data.output;
-
-					} else {
-
-						return conv_no_data( namespace, from_name, to_name, input );
-
-					};
-
-				},
-
-			};
-
-		// return
-
-			return _pub;
 
 	};
 
@@ -1936,6 +1635,553 @@
 				_state.app = app;
 
 				_priv.add_observers();
+
+			},
+
+		};
+
+		return _pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.exec = function () {
+
+		var modules = {
+
+		};
+
+		var _app = null;
+
+		// util functions
+
+			var exec_with_data = ( function () {
+
+				var exec = function () {
+
+					var module_name = arguments[ 0 ];
+					var method_name = arguments[ 1 ];
+
+					var new_arguments = [];
+
+					for ( var i = 0; i < arguments.length; i++ ) {
+
+						new_arguments.push( arguments[ i ] );
+
+					};
+
+					new_arguments.push( pseudo_exec );
+
+					var exec_data = {
+
+						module_name: module_name,
+						method_name: method_name,
+
+						exec_data_arr: [],
+						found: true,
+
+						arguments: arguments,
+						output: undefined,
+
+					};
+
+					function pseudo_exec () {
+
+						// var module_name = arguments[ 0 ];
+						// var method_name = arguments[ 1 ];
+
+						// var new_arguments = [];
+
+						// for ( var i = 0; i < arguments.length; i++ ) {
+
+						// 	new_arguments.push( arguments[ i ] );
+
+						// };
+
+						// new_arguments.push( pseudo_exec );
+
+						var local_exec_data = exec.apply( null, arguments );
+
+						exec_data.exec_data_arr.push( local_exec_data );
+
+						return local_exec_data.output;
+
+					};
+
+					if ( modules[ module_name ] ) {
+
+						try {
+
+							exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) )
+
+							if ( exec_data.output instanceof Promise ) {
+
+								exec_data.output = new Promise( function ( resolve ) {
+
+									exec_data.output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											exec_data.error = true;
+											exec_data.stack = error.stack;
+
+										});
+
+								});
+
+							};
+
+						} catch ( error ) {
+
+							exec_data.error = true;
+							exec_data.stack = error.stack;
+
+						};
+
+					} else {
+
+						exec_data.found = false;
+
+					};
+
+					return exec_data;
+
+				};
+
+				return exec;
+
+			} () );
+
+			var exec_no_data = ( function () {
+
+				var conv = function ( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+
+					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
+
+						try {
+
+							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
+
+							if (output instanceof Promise) {
+
+								return new Promise( function( resolve, reject ) {
+
+									output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											resolve(undefined);
+
+										});
+
+								});
+
+							} else {
+
+								return output;
+
+							};
+
+						} catch ( error ) {
+
+							return undefined;
+
+						};
+
+					} else {
+
+						return undefined;
+
+					};
+
+				};
+
+				return conv;
+
+			} () );
+
+		//
+
+		var _priv = {
+
+			exec: function () {
+
+				var exec_data = exec_with_data.apply( null, arguments );
+
+				console.log( "exec_data", exec_data );
+
+				_app.log.log_exec_data( exec_data );
+
+				return exec_data.output;
+
+				return;
+
+				var module_name = arguments[ 0 ];
+				var method_name = arguments[ 1 ];
+
+				console.log( "exec_start", module_name, method_name );
+
+				var new_arguments = [];
+
+				for ( var i = 0; i < arguments.length; i++ ) {
+
+					new_arguments.push( arguments[ i ] );
+
+				};
+
+				new_arguments.push( _priv.exec );
+
+				var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
+
+				console.log( "exec_output", module_name, method_name, output)
+
+				if ( output && typeof output.then === 'function' ) {
+
+					return new Promise( ( resolve ) => {
+
+						output.then( ( result ) => {
+
+							// console.log( "exec_end", new_arguments, result );
+
+							resolve( output );
+
+						}).catch( ( error ) => {
+
+							console.log( module_name, method_name );
+							console.log( error );
+
+							resolve( null );
+
+						});
+
+					});
+
+				} else {
+
+					console.log( "exec_end", new_arguments, output );
+
+					return output;
+
+				};
+
+			},
+
+		};
+
+		var pub = {
+
+			init: ( app ) => {
+
+				_app = app;
+
+			},
+
+			get_exec: () => {
+
+				return _priv.exec;
+
+			},
+
+			add_module: ( name, module ) => {
+
+				modules[ name ] = module;
+
+			},
+
+		};
+
+		return pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.log = function () {
+
+		var x = window[ window.webextension_library_name ];
+
+		var state = {
+
+			log_item_arr: [],
+
+		};
+
+		var default_options = {
+
+			mute_in_log_event_name_arr: [],
+
+		};
+
+		// write log item
+
+		function write_log_item ( log_item ) {
+
+			if ( log_item.type === "normal" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.arguments[ 0 ];
+
+				console.groupCollapsed( title, "color: black" );
+
+				for ( var i = 1; i < log_item.arguments.length; i ++ ) {
+
+					console.log( log_item.arguments[ i ] );
+
+				};
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "conv_data" ) {
+
+				var conv_data = log_item.conv_data;
+				var title = "%c " + ( log_item.app_name || "app" ) + " | " + conv_data.namespace + ": " + conv_data.from_name + " => " + conv_data.to_name;
+
+				if ( conv_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(conv_data.input);
+					console.log(conv_data.stack);
+
+				} else if (!conv_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(conv_data.input);
+
+				} else {
+
+					console.groupCollapsed( title, "color: green" );
+					console.log(conv_data.input);
+					console.log(conv_data.output);
+
+				};
+
+				// log simple string for testing
+
+					console.groupCollapsed( title, "color: grey" );
+
+					console.log( JSON.stringify({
+
+						input: conv_data.input,
+						output: conv_data.output,
+
+					}, null, "\t" ) );
+
+					console.groupEnd();
+
+				conv_data.conv_data_arr.forEach( function ( conv_data ) {
+
+					write_log_item({
+
+						type: "conv_data",
+						conv_data: conv_data,
+
+					});
+
+				});
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "exec_data" ) {
+
+				var exec_data = log_item.exec_data;
+				var title = "%c " + ( log_item.app_name || "app" ) + " | exec." + exec_data.module_name + "." + exec_data.method_name;
+
+				if ( exec_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(exec_data.arguments);
+					console.log(exec_data.stack);
+
+				} else if (!exec_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(exec_data.arguments);
+
+				} else {
+
+					console.groupCollapsed( title, "color: #00796B" );
+					console.log(exec_data.arguments);
+					console.log(exec_data.output);
+
+				};
+
+				// log simple string for testing
+
+					// console.groupCollapsed( title, "color: grey" );
+
+					// console.log( JSON.stringify({
+
+					// 	arguments: exec_data.arguments,
+					// 	output: exec_data.output,
+
+					// }, null, "\t" ) );
+
+					// console.groupEnd();
+
+				exec_data.exec_data_arr.forEach( function ( exec_data ) {
+
+					write_log_item({
+
+						type: "exec_data",
+						exec_data: exec_data,
+
+					});
+
+				});
+
+				console.groupEnd();
+
+			} else if ( log_item.type === "event" ) {
+
+				var title = "%c " + log_item.app_name + " | " + log_item.listener + " ( " + log_item.source + " )" + ": " + log_item.name;
+
+				console.groupCollapsed( title, "color: blue" );
+				console.log( log_item.data );
+				console.groupEnd();
+
+			};
+
+
+		};
+
+		var _pub = {
+
+			init: function ( app, options ) {
+
+				state.app = app
+				state.mode = app.config.mode;
+				state.options = options || default_options;
+
+			},
+
+			write: function () { // log type = normal
+
+				var log_item = {
+
+					type: "normal",
+					app_name: state.app.name,
+
+					arguments: x.convert( arguments, [[ "list_to_arr" ]] ),
+
+				};
+
+				if ( state.app.report_manager ) {
+
+					state.app.report_manager.store_log_item( log_item ); 
+
+				};
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item )
+
+				};
+
+			},
+
+			log_conv_data: function ( conv_data ) { // log type = conv_data
+
+				var log_item = {
+
+					type: "conv_data",
+					app_name: state.app.name,
+
+					conv_data,
+
+				};
+
+				if ( state.app.report_manager ) {
+
+					state.app.report_manager.store_log_item( log_item );
+
+				};
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item )
+
+				};
+
+			},
+
+			log_exec_data: function ( exec_data ) { // log type = exec_data
+
+				var log_item = {
+
+					type: "exec_data",
+					app_name: state.app.name,
+
+					exec_data,
+
+				};
+
+				if ( state.app.report_manager ) {
+
+					state.app.report_manager.store_log_item( log_item );
+
+				};
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item )
+
+				};
+
+			},
+
+			log_event: function ( source, listener, name, data ) { // log type = event
+
+				var log_item = {
+
+					type: "event",
+					app_name: state.app.name,
+
+					source,
+					listener,
+					name,
+					data,
+
+				};
+
+				if ( state.options.mute_in_log_event_name_arr.indexOf( log_item.name ) === -1 ) {
+
+					if ( state.app.report_manager ) {
+
+						state.app.report_manager.store_log_item( log_item );
+
+					};
+
+					if ( state.mode === "dev" ) {
+
+						write_log_item( log_item );
+
+					};
+
+				};
+
+			},
+
+			log_log_item_arr: function ( log_item_arr ) { // utility function to log an array of log_item
+
+				// console.log( "log_item_arr", log_item_arr );
+
+				for ( var i = 0; i < log_item_arr.length; i++ ) {
+
+					var log_item = x.convert( log_item_arr[ i ], [
+						[ "decode_json" ],
+					]);
+
+					// console.log( "log_item", log_item );
+
+					write_log_item( log_item );
+
+				};
 
 			},
 

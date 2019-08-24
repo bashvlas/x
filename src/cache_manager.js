@@ -28,7 +28,7 @@
 
 				};
 
-				_app.log( "clean_up_cache", cache_item_arr );
+				_app.log.write( "clean_up_cache", cache_item_arr );
 
 				await chrome_p.storage.local.set({ cache: cache_item_arr });
 
