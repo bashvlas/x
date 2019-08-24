@@ -4071,7 +4071,7 @@
 						exec_data_arr: [],
 						found: true,
 
-						arguments: arguments,
+						arguments: new_arguments.slice( 2, -1 ),
 						output: undefined,
 
 					};
@@ -4384,12 +4384,26 @@
 
 				exec_data.exec_data_arr.forEach( function ( exec_data ) {
 
-					write_log_item({
+					if ( exec_data.module_name === "log" && exec_data.method_name === "write_exec" ) {
 
-						type: "exec_data",
-						exec_data: exec_data,
+						write_log_item({
 
-					});
+							type: "normal",
+							app_name: "app",
+							arguments: exec_data.arguments,
+
+						})
+
+					} else {
+
+						write_log_item({
+
+							type: "exec_data",
+							exec_data: exec_data,
+
+						});
+
+					};
 
 				});
 
@@ -4440,6 +4454,10 @@
 					write_log_item( log_item )
 
 				};
+
+			},
+
+			write_exec: function () {
 
 			},
 
