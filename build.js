@@ -7,15 +7,13 @@
 		"src/main.js",
 
 		"src/util.js",
-		"src/hub.js",
 		"src/test.js",
 		"src/ajax.js",
 		"src/query.js",
 		"src/storage.js",
 		"src/detect.js",
-		"src/bg_api.js",
 		"src/conv.js",
-		"src/chrome_p.js",
+		"src/modules.js",
 		"src/cache_manager.js",
 
 	], 'dist/webx/webx.js', function ( err ) {

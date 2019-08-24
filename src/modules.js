@@ -151,7 +151,7 @@
 
 	window[ window.webextension_library_name ].modules.chrome = function () {
 
-		_app = null;
+		var _app = null;
 
 		function callback_handler ( path, resolve, response ) {
 
@@ -1211,8 +1211,6 @@
 
 				_state.config = app.config;
 
-				x.bg_api.register( "report_manager_hub", _pub );
-
 			},
 
 		};
@@ -1242,7 +1240,7 @@
 						[ "encode_json" ],
 					]);
 
-					x.bg_api.exec( "report_manager_hub", "store_log_item", {
+					_app.bg_api.exec( "report_manager_hub", "store_log_item", {
 
 						log_item: log_item,
 
@@ -1263,6 +1261,681 @@
 				_app = app;
 
 				_state.config = app.config;
+
+			},
+
+		};
+
+		return _pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.iframe_component_internal_manager = function () {
+
+		var _state = {
+
+			app: null,
+			iframe_component_arr: []
+
+		};
+
+		var _priv = {
+
+			add_observers: () => {
+
+				window.addEventListener( "message", ( event ) => {
+
+					if ( event.data && event.data.webx_id === _state.app.config.webx_id ) {
+
+						_state.app.hub.fire( event.data.name, event.data.data );
+
+					};
+
+				});
+
+			},
+
+		};
+
+		var _pub = {
+
+			init: ( app ) => {
+
+				_state.app = app;
+				_priv.add_observers();
+
+			},
+
+			send_message: ( name, data ) => {
+
+				window.top.postMessage({
+
+					webx_id: _state.app.config.webx_id,
+					window_name: window.name,
+
+					name: name,
+					data: data || {},
+
+				}, "*" );
+
+			},
+
+		};
+
+		return _pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.iframe_component_external_manager = function () {
+
+		var _state = {
+
+			app: null,
+			initialized: false,
+			iframe_component_arr: []
+
+		};
+
+		var _priv = {
+
+			add_observers: () => {
+
+				window.addEventListener( "message", ( event ) => {
+
+					if ( event.data && event.data.webx_id === _state.app.config.webx_id ) {
+
+						_state.iframe_component_arr.forEach( ( iframe_component ) => {
+
+							if ( iframe_component.name === event.data.window_name ) {
+
+								event.data.data.iframe_component = iframe_component;
+
+								if ( event.data.name === "iframe_component_ready" ) {
+
+									iframe_component.ready = true;
+									iframe_component.content_window = event.source;
+
+								};
+
+								_state.app.hub.fire( event.data.name, event.data.data );
+
+							};
+
+						});
+
+					};
+
+				});
+
+			},
+
+			send_message: ( iframe_component, name, data ) => {
+
+				if ( iframe_component.content_window && iframe_component.content_window.postMessage ) {
+
+					iframe_component.content_window.postMessage({
+
+						webx_id: _state.app.config.webx_id,
+						name: name,
+						data: data,
+
+					}, "*" );
+
+				} else {
+
+					_state.app.log( "Could not send a message to the iframe" );
+
+				};
+
+			},
+
+		};
+
+		var _pub = {
+
+			init: ( app ) => {
+
+				if ( _state.initialized === false ) {
+
+					_state.initialized = true;
+
+					_state.app = app;
+
+					_priv.add_observers();
+
+				};
+
+			},
+
+			create_iframe_component_instance: ( name, url ) => {
+
+				// initialize
+
+					var iframe_component = {
+
+						name: name,
+						ready: false,
+
+					};
+
+					_state.iframe_component_arr.push( iframe_component );
+
+					iframe_component.element = document.createElement( "iframe" );
+					iframe_component.element.name = name;
+
+				// add methods
+
+					iframe_component.send_message = function ( event_name, data ) {
+
+						_priv.send_message( iframe_component, event_name, data );
+
+					};
+
+				// assing src and return component object
+
+					iframe_component.element.src = chrome.extension.getURL( url );
+
+					return iframe_component;
+
+			},
+
+		};
+
+		return _pub;			
+
+	};
+
+	window[ window.webextension_library_name ].modules.pure = function () {
+
+		// define x
+
+			var x = window[ window.webextension_library_name ];
+			var _app = null;
+
+		// vars
+
+			var converters_hash = {};
+			var options = {
+
+				silence: [],
+
+			};
+
+		// util functions
+
+			var conv_with_data = ( function () {
+
+				var conv = function( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+					var conv_name = from_name + "_to_" + to_name;
+					var conv_data = {
+
+						namespace: namespace,
+						from_name: from_name,
+						to_name: to_name,
+
+						conv_data_arr: [],
+						found: true,
+
+						input: input,
+						output: undefined,
+
+					};
+
+					function pseudo_conv ( namespace, from_name, to_name, input ) {
+
+						var local_conv_data = conv( namespace, from_name, to_name, input );
+						conv_data.conv_data_arr.push( local_conv_data );
+
+						return local_conv_data.output;
+
+					};
+
+					if ( conv_hash[ conv_name ] ) {
+
+						try {
+
+							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
+
+							if (conv_data.output instanceof Promise) {
+
+								conv_data.output = new Promise( function ( resolve ) {
+
+									conv_data.output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											conv_data.error = true;
+											conv_data.stack = error.stack;
+
+										});
+
+								});
+
+							};
+
+						} catch ( error ) {
+
+							conv_data.error = true;
+							conv_data.stack = error.stack;
+
+						};
+
+					} else {
+
+						conv_data.found = false;
+
+					};
+
+					return conv_data;
+
+				};
+
+				return conv;
+
+			} () );
+
+			var conv_no_data = ( function () {
+
+				var conv = function ( namespace, from_name, to_name, input ) {
+
+					var conv_hash = converters_hash[ namespace ];
+
+					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
+
+						try {
+
+							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
+
+							if (output instanceof Promise) {
+
+								return new Promise( function( resolve, reject ) {
+
+									output
+										.then(function(output) {
+
+											resolve(output);
+
+										})
+										.catch(function(error) {
+
+											resolve(undefined);
+
+										});
+
+								});
+
+							} else {
+
+								return output;
+
+							};
+
+						} catch ( error ) {
+
+							return undefined;
+
+						};
+
+					} else {
+
+						return undefined;
+
+					};
+
+				};
+
+				return conv;
+
+			} () );
+
+
+		// public functions
+
+			var _pub = {
+
+				init: function ( app ) {
+
+					_app = app;
+
+				},
+
+				set_options: function ( new_options ) {
+
+					options = new_options;
+
+				},
+
+				register: function ( namespace, hash ) {
+
+					converters_hash[ namespace ] = hash;
+
+				},
+
+				call: function ( namespace, from_name, to_name, input ) {
+
+					if ( _app.config.mode === "dev" ) {
+
+						var conv_data = conv_with_data( namespace, from_name, to_name, input );
+
+						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
+
+							_app.log.log_conv_data( conv_data );
+
+						};
+
+						return conv_data.output;
+
+					} else {
+
+						return conv_no_data( namespace, from_name, to_name, input );
+
+					};
+
+				},
+
+			};
+
+		// return
+
+			return _pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.bg_api = function () {
+
+		if ( typeof chrome.extension === "undefined" ) {
+
+			return;
+
+		};
+
+		var x = window[ window.webextension_library_name ];
+
+		var api_hash = {};
+		var _app = null;
+
+		return {
+
+			init: function ( app ) {
+
+				_app = app;
+
+				if ( chrome.extension.getBackgroundPage && chrome.extension.getBackgroundPage() === window ) {
+
+					chrome.runtime.onMessage.addListener( function ( message, sender, callback ) {
+
+						if ( message._target === "bg_api" ) {
+
+							if ( api_hash[ message.api_name ] && api_hash[ message.api_name ][ message.method_name ] ) {
+
+								var output = api_hash[ message.api_name ][ message.method_name ]( message.input, sender );
+
+								if ( output instanceof Promise ) {
+
+									output.then( callback );
+									return true;
+
+								} else {
+
+									callback( output );
+
+								};
+
+							};
+
+						};
+
+					});
+
+				};
+
+			},
+
+			register: function ( api_name, method_hash ) {
+
+				api_hash[ api_name ] = method_hash;
+
+			},
+
+			exec: function ( api_name, method_name, input ) {
+
+				if ( chrome.extension.getBackgroundPage && chrome.extension.getBackgroundPage() === window ) {
+
+					return api_hash[ api_name ][ method_name ]( input );
+
+				} else {
+
+					return new Promise ( function ( resolve ) {
+
+						try {
+
+							chrome.runtime.sendMessage({
+
+								_target: "bg_api",
+								api_name: api_name,
+								method_name: method_name,
+								input: input
+
+							}, function ( response ) {
+
+								resolve( response );
+
+							});
+
+						} catch ( e ) {
+
+							console( "error while sending bg message", e );
+
+						};
+
+					});
+
+				};
+
+			},
+
+		};
+
+	};
+
+	window[ window.webextension_library_name ].modules.cache_manager = function () {
+
+		// cache_item[ 0 ] - id
+		// cache_item[ 1 ] - object
+		// cache_item[ 2 ] - time of creation
+		// cache_item[ 3 ] - store_forever_flag ( optional, overrides config.cache_max_age )
+
+		var _state = {};
+		var _app = null;
+
+		var _priv = {
+
+			init_cache: () => {
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.get([ "cache" ], ( storage_items ) => {
+
+						if ( storage_items[ "cache" ] ) { // remove old items from cache if cache exists
+
+							var current_ts = Date.now();
+							var max_age = _state.app.config.cache_max_age * 60 * 60 * 1000;
+							var cache_item_arr = storage_items[ "cache" ];
+
+							for ( var i = cache_item_arr.length; i--; ) {
+
+								if ( cache_item_arr[ i ][ 3 ] === true ) {
+
+									//
+
+								} else {
+
+									if ( current_ts - cache_item_arr[ i ][ 2 ] > max_age ) {
+
+										cache_item_arr.splice( i, 1 );
+
+									};
+
+								};
+
+							};
+
+							chrome.storage.local.set({ cache: cache_item_arr }, () => {
+
+								resolve();
+
+							});
+
+						} else { // crate cache if it has not been created yet
+
+							storage_items[ "cache" ] = [];
+
+							chrome.storage.local.set( storage_items, () => {
+
+								resolve();
+
+							});
+
+						};
+
+					});
+
+				});
+
+			}
+
+		};
+
+		var _pub = {
+
+			init: ( app ) => {
+
+				_app = app;
+				_state.app = app;
+
+				_priv.init_cache()
+				.then( () => {
+
+					_state.app.hub.fire( "cache_manager_ready" );
+
+				});
+
+			},
+
+			set: ( id, obj, store_forever_flag ) => {
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.get([ "cache" ], ( storage_items ) => {
+
+						var cache_item_arr = storage_items[ "cache" ];
+						var current_cache_item_index = null;
+						var current_ts = Date.now();
+
+						for ( var i = cache_item_arr.length; i--; ) {
+
+							if ( cache_item_arr[ i ][ 0 ] === id ) {
+
+								current_cache_item_index = i;
+								break;
+
+							};
+
+						};
+
+						if ( current_cache_item_index !== null ) {
+
+							cache_item_arr.splice( current_cache_item_index, 1 );
+
+						};
+
+						cache_item_arr.push([ id, obj, current_ts, store_forever_flag ]);
+
+						chrome.storage.local.set({ cache: cache_item_arr }, () => {
+
+							resolve( obj );
+
+						});
+
+					});
+
+				});
+
+			},
+
+			get: ( id ) => {
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.get([ "cache" ], ( storage_items ) => {
+
+						var cache_item_arr = storage_items[ "cache" ];
+						var cache_item_obj = null;
+
+						for ( var i = cache_item_arr.length; i--; ) {
+
+							if ( cache_item_arr[ i ][ 0 ] === id ) {
+
+								cache_item_obj = cache_item_arr[ i ][ 1 ];
+								break;
+
+							};
+
+						};
+
+						resolve( cache_item_obj );
+
+					});
+
+				});
+
+			},
+
+		};
+
+		return _pub;
+
+	};
+
+	window[ window.webextension_library_name ].modules.test_page_manager = function () {
+
+		var _state = {};
+
+		var _priv = {
+
+			add_observers: () => {
+
+				$( document ).on( "click", "#webx_test_page #update_button", () => {
+
+					var event_info = _state.app.x.convert( document, [
+						[ "query_selector", "#event_info" ],
+						[ "object_property", "innerHTML" ],
+						[ "decode_json" ],
+					]);
+
+					_state.app.hub.fire( event_info.name, event_info.data );
+
+				});
+
+			},
+
+		};
+
+		var _pub = {
+
+			ready: false,
+
+			init: ( app ) => {
+
+				_state.app = app;
+
+				_priv.add_observers();
 
 			},
 
