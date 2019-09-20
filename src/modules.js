@@ -902,7 +902,6 @@
 				var blob = new Blob([ json ]);
 				var url = URL.createObjectURL( blob );
 
-				window.open( url );
 				x.util.download_file( data.report_name, url );
 
 			},
@@ -936,8 +935,7 @@
 				if ( _state.config && _state.config.report_config && _state.config.report_config.active ) {
 
 					log_item = x.convert( log_item, [
-						[ "simplify", 5 ],
-						[ "encode_json" ],
+						[ "simplify", 10 ]
 					]);
 
 					_app.bg_api.exec( "report_manager_hub", "store_log_item", {
@@ -1228,7 +1226,7 @@
 
 						} catch ( e ) {
 
-							console( "error while sending bg message", e );
+							console.log( "error while sending bg message", e );
 
 						};
 
@@ -1395,6 +1393,16 @@
 
 			},
 
+			clear: () => {
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.set( { cache: [] }, resolve );
+
+				});
+
+			},
+
 		};
 
 		return _pub;
@@ -1440,432 +1448,6 @@
 		};
 
 		return _pub;
-
-	};
-
-	window[ window.webextension_library_name ].modules.pure = function () {
-
-		// define x
-
-			var x = window[ window.webextension_library_name ];
-			var _app = null;
-
-		// vars
-
-			var converters_hash = {};
-			var options = {
-
-				silence: [],
-
-			};
-
-		// util functions
-
-			var conv_with_data = ( function () {
-
-				var conv = function( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-					var conv_name = from_name + "_to_" + to_name;
-					var conv_data = {
-
-						namespace: namespace,
-						from_name: from_name,
-						to_name: to_name,
-
-						conv_data_arr: [],
-						found: true,
-
-						input: input,
-						output: undefined,
-
-					};
-
-					function pseudo_conv ( namespace, from_name, to_name, input ) {
-
-						var local_conv_data = conv( namespace, from_name, to_name, input );
-						conv_data.conv_data_arr.push( local_conv_data );
-
-						return local_conv_data.output;
-
-					};
-
-					if ( conv_hash[ conv_name ] ) {
-
-						try {
-
-							conv_data.output = conv_hash[ conv_name ]( input, pseudo_conv );
-
-							if (conv_data.output instanceof Promise) {
-
-								conv_data.output = new Promise( function ( resolve ) {
-
-									conv_data.output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											conv_data.error = true;
-											conv_data.stack = error.stack;
-
-										});
-
-								});
-
-							};
-
-						} catch ( error ) {
-
-							conv_data.error = true;
-							conv_data.stack = error.stack;
-
-						};
-
-					} else {
-
-						conv_data.found = false;
-
-					};
-
-					return conv_data;
-
-				};
-
-				return conv;
-
-			} () );
-
-			var conv_no_data = ( function () {
-
-				var conv = function ( namespace, from_name, to_name, input ) {
-
-					var conv_hash = converters_hash[ namespace ];
-
-					if ( conv_hash && conv_hash[ from_name + "_to_" + to_name] ) {
-
-						try {
-
-							var output = conv_hash[ from_name + "_to_" + to_name ]( input, conv );
-
-							if (output instanceof Promise) {
-
-								return new Promise( function( resolve, reject ) {
-
-									output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											resolve(undefined);
-
-										});
-
-								});
-
-							} else {
-
-								return output;
-
-							};
-
-						} catch ( error ) {
-
-							return undefined;
-
-						};
-
-					} else {
-
-						return undefined;
-
-					};
-
-				};
-
-				return conv;
-
-			} () );
-
-		// public functions
-
-			var _pub = {
-
-				init: function ( app ) {
-
-					_app = app;
-
-				},
-
-				set_options: function ( new_options ) {
-
-					options = new_options;
-
-				},
-
-				register: function ( namespace, hash ) {
-
-					converters_hash[ namespace ] = hash;
-
-				},
-
-				call: function ( namespace, from_name, to_name, input ) {
-
-					if ( _app.config.mode === "dev" ) {
-
-						var conv_data = conv_with_data( namespace, from_name, to_name, input );
-
-						if ( options.silence && options.silence.indexOf( from_name + "_to_" + to_name ) === -1 ) {
-
-							_app.log.log_conv_data( conv_data );
-
-						};
-
-						return conv_data.output;
-
-					} else {
-
-						return conv_no_data( namespace, from_name, to_name, input );
-
-					};
-
-				},
-
-			};
-
-		// return
-
-			return _pub;
-
-	};
-
-	window[ window.webextension_library_name ].modules.exec = function () {
-
-		var modules = {
-
-		};
-
-		var _app = null;
-
-		// util functions
-
-			var exec_with_data = ( function () {
-
-				var exec = function () {
-
-					var module_name = arguments[ 0 ];
-					var method_name = arguments[ 1 ];
-
-					var new_arguments = [];
-
-					for ( var i = 0; i < arguments.length; i++ ) {
-
-						new_arguments.push( arguments[ i ] );
-
-					};
-
-					new_arguments.push( pseudo_exec );
-
-					var exec_data = {
-
-						module_name: module_name,
-						method_name: method_name,
-
-						exec_data_arr: [],
-						found: true,
-
-						arguments: new_arguments.slice( 2, -1 ),
-						output: undefined,
-
-					};
-
-					function pseudo_exec () {
-
-						// var module_name = arguments[ 0 ];
-						// var method_name = arguments[ 1 ];
-
-						// var new_arguments = [];
-
-						// for ( var i = 0; i < arguments.length; i++ ) {
-
-						// 	new_arguments.push( arguments[ i ] );
-
-						// };
-
-						// new_arguments.push( pseudo_exec );
-
-						var local_exec_data = exec.apply( null, arguments );
-
-						exec_data.exec_data_arr.push( local_exec_data );
-
-						return local_exec_data.output;
-
-					};
-
-					if ( modules[ module_name ] ) {
-
-						try {
-
-							exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) )
-
-							if ( exec_data.output instanceof Promise ) {
-
-								exec_data.output = new Promise( function ( resolve ) {
-
-									exec_data.output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											exec_data.error = true;
-											exec_data.stack = error.stack;
-
-										});
-
-								});
-
-							};
-
-						} catch ( error ) {
-
-							exec_data.error = true;
-							exec_data.stack = error.stack;
-
-						};
-
-					} else {
-
-						exec_data.found = false;
-
-					};
-
-					return exec_data;
-
-				};
-
-				return exec;
-
-			} () );
-
-			var exec_no_data = ( function () {
-
-				var exec = function () {
-
-					var module_name = arguments[ 0 ];
-					var method_name = arguments[ 1 ];
-
-					var new_arguments = [];
-
-					for ( var i = 0; i < arguments.length; i++ ) {
-
-						new_arguments.push( arguments[ i ] );
-
-					};
-
-					new_arguments.push( _priv.exec );
-
-					var output = modules[ module_name ][ method_name ].apply( null, new_arguments.slice( 2 ) );
-
-					if ( output && typeof output.then === 'function' ) {
-
-						return new Promise( ( resolve ) => {
-
-							output.then( ( result ) => {
-
-								// console.log( "exec_end", new_arguments, result );
-
-								resolve( output );
-
-							}).catch( ( error ) => {
-
-								console.log( module_name, method_name );
-								console.log( error );
-
-								resolve( null );
-
-							});
-
-						});
-
-					} else {
-
-						return output;
-
-					};
-
-				};
-
-				return exec;
-
-			} () );
-
-		//
-
-		var _priv = {
-
-			exec: function () {
-
-				if ( _app.config.mode === "dev" ) {
-
-					var exec_data = exec_with_data.apply( null, arguments );
-
-					if ( exec_data.output instanceof Promise ) {
-
-						exec_data.output.then( () => {
-
-							_app.log.log_exec_data( exec_data );
-
-						});
-
-					} else {
-
-						_app.log.log_exec_data( exec_data );
-
-					};
-
-					return exec_data.output;
-
-				} else {
-
-					return exec_no_data.apply( arguments );
-
-				};
-
-			},
-
-		};
-
-		var pub = {
-
-			init: ( app ) => {
-
-				_app = app;
-
-			},
-
-			get_exec: () => {
-
-				return _priv.exec;
-
-			},
-
-			add_module: ( name, module ) => {
-
-				modules[ name ] = module;
-
-			},
-
-		};
-
-		return pub;
 
 	};
 
@@ -2157,13 +1739,13 @@
 
 				for ( var i = 0; i < log_item_arr.length; i++ ) {
 
-					var log_item = x.convert( log_item_arr[ i ], [
-						[ "decode_json" ],
-					]);
+					// var log_item = x.convert( log_item_arr[ i ], [
+					// 	[ "decode_json" ],
+					// ]);
 
 					// console.log( "log_item", log_item );
 
-					write_log_item( log_item );
+					write_log_item( log_item_arr[ i ] );
 
 				};
 

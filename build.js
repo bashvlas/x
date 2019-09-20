@@ -13,10 +13,11 @@
 		"src/storage.js",
 		"src/detect.js",
 		"src/conv.js",
-		"src/modules.js",
 		"src/cache_manager.js",
+		"src/modules.js",
+		"src/exec_modules.js",
 
-	], 'dist/webx/webx.js', function ( err ) {
+	], 'dist/webx.js', function ( err ) {
 
 		if ( err ) {
 
