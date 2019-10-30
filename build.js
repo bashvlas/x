@@ -9,6 +9,7 @@
 		"src/util.js",
 		"src/test.js",
 		"src/ajax.js",
+		"src/ajax2.js",
 		"src/query.js",
 		"src/storage.js",
 		"src/detect.js",

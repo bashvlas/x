@@ -221,6 +221,16 @@
 
 						output = output[ conv_data[ 1 ] ];
 
+					} else if ( conv_data[ 0 ] === "property_path" ) {
+
+						var path = conv_data[ 1 ].split( '.' );
+
+						for ( var i = 0; i < path.length; i++ ) {
+
+							output = output[ path[ i ] ];
+
+						};
+
 					} else if ( conv_data[ 0 ] === "array_item" ) {
 
 						output = output[ conv_data[ 1 ] ];

@@ -6,8 +6,6 @@
 
 		return {
 
-			
-
 			get_scrollbar_width () {
 
 				var div = document.createElement('div');

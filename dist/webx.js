@@ -13,8 +13,6 @@
 
 		return {
 
-			
-
 			get_scrollbar_width () {
 
 				var div = document.createElement('div');
@@ -1108,7 +1106,7 @@
 
 					function load_listener () {
 
-						if ( this.status === 200 ) {
+						if ( 200 <= this.status && this.status < 300 ) {
 
 							resolve({
 
@@ -1376,7 +1374,6 @@
 		return ajax;
 
 	} () );
-
 	window[ window.webextension_library_name ].ajax2 = ( function () {
 
 		var x = window[ window.webextension_library_name ];
@@ -1391,7 +1388,7 @@
 
 						if ( this.readyState === 4 ) {
 
-							if ( this.status === 200 ) {
+							if ( 200 <= this.status && this.status < 300 ) {
 
 								resolve({
 
@@ -1444,7 +1441,7 @@
 
 					function load_listener () {
 
-						if ( this.status === 200 ) {
+						if ( 200 <= this.status && this.status < 300 ) {
 
 							resolve({
 
@@ -1464,7 +1461,7 @@
 							resolve({
 
 								meta: {
-	
+
 									success: false,
 									error: true,
 									status: this.status,
@@ -1489,6 +1486,7 @@
 								status: this.status,
 
 							},
+							data: this.response,
 
 						});
 
@@ -2205,6 +2203,16 @@
 					if ( conv_data[ 0 ] === "object_property" ) {
 
 						output = output[ conv_data[ 1 ] ];
+
+					} else if ( conv_data[ 0 ] === "property_path" ) {
+
+						var path = conv_data[ 1 ].split( '.' );
+
+						for ( var i = 0; i < path.length; i++ ) {
+
+							output = output[ path[ i ] ];
+
+						};
 
 					} else if ( conv_data[ 0 ] === "array_item" ) {
 
