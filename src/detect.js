@@ -13,6 +13,7 @@
 				var method = rq.method || "normal";
 				var selector = rq.selector || "*";
 				var detector_id = detector_counter;
+				var attributes = rq.attributes || false;
 
 			// increase the counter
 
@@ -85,7 +86,7 @@
 
 						})
 
-						observer.observe( root_element, { childList: true, subtree: true } );
+						observer.observe( root_element, { childList: true, subtree: true, attributes } );
 
 					};
 

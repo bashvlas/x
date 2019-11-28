@@ -34,7 +34,7 @@
 
 		// util functions
 
-			function exec_with_data () {
+			function exec_2 () {
 
 				var argument_arr = Array.from( arguments );
 
@@ -77,7 +77,7 @@
 				};
 
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_with_data.bind( null, exec_call_data ) );
+				new_arguments.push( exec_2.bind( null, exec_call_data ) );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
@@ -127,80 +127,16 @@
 
 			};
 
-			function exec_no_data () {
-
-				var argument_arr = Array.from( arguments );
-
-				var parent_exec_call_data = argument_arr[ 0 ];
-				var module_name = argument_arr[ 1 ];
-				var method_name = argument_arr[ 2 ];
-
-				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_no_data.bind( null, exec_call_data ) );
-
-				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
-
-					try {
-
-						var output = modules[ module_name ][ method_name ].apply( null, new_arguments )
-
-						if ( exec_call_data.output instanceof Promise ) {
-
-							return new Promise( ( resolve ) => {
-
-								output.then( ( result ) => {
-
-									resolve( output );
-
-								}).catch( ( error ) => {
-
-									resolve( null );
-
-								});
-
-							});
-
-						} else {
-
-							return output;
-
-						};
-
-					} catch ( error ) {
-
-						return null;
-
-					};
-
-				} else {
-
-					return null;
-
-				};
-
-			};
-
 		//
 
 		var _priv = {
 
 			exec: function () {
 
-				if ( _app.config.mode === "dev" ) {
+				var argument_arr = Array.from( arguments );
+				argument_arr.unshift( null );
 
-					var argument_arr = Array.from( arguments );
-					argument_arr.unshift( null );
-
-					return exec_with_data.apply( null, argument_arr );
-
-				} else {
-
-					var argument_arr = Array.from( arguments );
-					argument_arr.unshift( null );
-
-					return exec_no_data.apply( null, argument_arr );
-
-				};
+				return exec_2.apply( null, argument_arr );
 
 			},
 
@@ -219,7 +155,7 @@
 				var argument_arr = Array.from( arguments );
 				argument_arr.unshift( null );
 
-				return exec_with_data.apply( null, argument_arr );
+				return exec_2.apply( null, argument_arr );
 
 			},
 
@@ -230,6 +166,18 @@
 					_app.log.log_exec_call_data( d );
 
 				});
+
+			},
+
+			get_exec: ( namespace ) => {
+
+				return _priv.exec.bind( null, namespace );
+
+			},
+
+			get_exec_with_data: ( namespace ) => {
+
+				return exec_with_data.bind( null, namespace );
 
 			},
 

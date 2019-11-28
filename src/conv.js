@@ -217,7 +217,7 @@
 
 					// object_property
 
-					if ( conv_data[ 0 ] === "object_property" ) {
+					if ( conv_data[ 0 ] === "object_property" || conv_data[ 0 ] === "get" ) {
 
 						output = output[ conv_data[ 1 ] ];
 
@@ -239,9 +239,13 @@
 
 					// execute_method
 
-					else if ( conv_data[ 0 ] === "execute_method" ) {
+					else if ( conv_data[ 0 ] === "execute_method" || conv_data[ 0 ] === "call" ) {
 
 						output = output[ conv_data[ 1 ] ]( conv_data[ 2 ], conv_data[ 3 ], conv_data[ 4 ] );
+
+					} else if ( conv_data[ 0 ] === "fn" ) {
+
+						output = conv_data[ 1 ]( output );
 
 					} else if ( conv_data[ 0 ] === "match" ) {
 
@@ -282,6 +286,13 @@
 					} else if ( conv_data[ 0 ] === "decode_json" ) {
 
 						output = JSON.parse( output );
+
+					} else if ( conv_data[ 0 ] === "html_entity_decode" ) {
+
+						var div = document.createElement( "div" );
+						div.innerHTML = output;
+
+						output = div.innerText;
 
 					} else if ( conv_data[ 0 ] === "encode_json" ) {
 

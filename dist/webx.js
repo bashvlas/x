@@ -1812,6 +1812,7 @@
 				var method = rq.method || "normal";
 				var selector = rq.selector || "*";
 				var detector_id = detector_counter;
+				var attributes = rq.attributes || false;
 
 			// increase the counter
 
@@ -1884,7 +1885,7 @@
 
 						})
 
-						observer.observe( root_element, { childList: true, subtree: true } );
+						observer.observe( root_element, { childList: true, subtree: true, attributes } );
 
 					};
 
@@ -2200,7 +2201,7 @@
 
 					// object_property
 
-					if ( conv_data[ 0 ] === "object_property" ) {
+					if ( conv_data[ 0 ] === "object_property" || conv_data[ 0 ] === "get" ) {
 
 						output = output[ conv_data[ 1 ] ];
 
@@ -2222,9 +2223,13 @@
 
 					// execute_method
 
-					else if ( conv_data[ 0 ] === "execute_method" ) {
+					else if ( conv_data[ 0 ] === "execute_method" || conv_data[ 0 ] === "call" ) {
 
 						output = output[ conv_data[ 1 ] ]( conv_data[ 2 ], conv_data[ 3 ], conv_data[ 4 ] );
+
+					} else if ( conv_data[ 0 ] === "fn" ) {
+
+						output = conv_data[ 1 ]( output );
 
 					} else if ( conv_data[ 0 ] === "match" ) {
 
@@ -2265,6 +2270,13 @@
 					} else if ( conv_data[ 0 ] === "decode_json" ) {
 
 						output = JSON.parse( output );
+
+					} else if ( conv_data[ 0 ] === "html_entity_decode" ) {
+
+						var div = document.createElement( "div" );
+						div.innerHTML = output;
+
+						output = div.innerText;
 
 					} else if ( conv_data[ 0 ] === "encode_json" ) {
 
@@ -4019,7 +4031,7 @@
 
 		// write log item
 
-		function write_log_item ( log_item ) {
+		async function write_log_item ( log_item ) {
 
 			if ( log_item.type === "normal" ) {
 
@@ -4105,22 +4117,9 @@
 
 					console.groupCollapsed( title, "color: #5D4037" );
 					console.log(exec_data.arguments);
-					console.log(exec_data.output);
+					console.log( exec_data.output );
 
 				};
-
-				// log simple string for testing
-
-					// console.groupCollapsed( title, "color: grey" );
-
-					// console.log( JSON.stringify({
-
-					// 	arguments: exec_data.arguments,
-					// 	output: exec_data.output,
-
-					// }, null, "\t" ) );
-
-					// console.groupEnd();
 
 				exec_data.exec_data_arr.forEach( function ( exec_data ) {
 
@@ -4157,8 +4156,58 @@
 				console.log( log_item.data );
 				console.groupEnd();
 
-			};
+			} else if ( log_item.type === "exec_call_data" ) {
 
+				var exec_data = log_item.exec_call_data;
+				var title = "%c " + ( log_item.app_name || "app" ) + " | exec." + exec_data.module_name + "." + exec_data.method_name;
+
+				if ( exec_data.error ) {
+
+					console.groupCollapsed( title, "color: red" );
+					console.log(exec_data.arguments);
+					console.log(exec_data.stack);
+
+				} else if (!exec_data.found) {
+
+					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.log(exec_data.arguments);
+
+				} else {
+
+					console.groupCollapsed( title, "color: #5D4037" );
+					console.log(exec_data.arguments);
+					console.log( exec_data.output );
+
+				};
+
+				exec_data.exec_data_arr.forEach( function ( exec_data ) {
+
+					if ( exec_data.module_name === "log" && exec_data.method_name === "write_exec" ) {
+
+						write_log_item({
+
+							type: "normal",
+							app_name: "app",
+							arguments: exec_data.arguments,
+
+						});
+
+					} else {
+
+						write_log_item({
+
+							type: "exec_data",
+							exec_data: exec_data,
+
+						});
+
+					};
+
+				});
+
+				console.groupEnd();
+
+			};
 
 		};
 
@@ -4251,6 +4300,25 @@
 
 			},
 
+			log_exec_call_data: function ( exec_call_data ) { // log type = exec_call_data
+
+				var log_item = {
+
+					type: "exec_call_data",
+					app_name: state.app.name,
+
+					exec_call_data,
+
+				};
+
+				if ( state.mode === "dev" ) {
+
+					write_log_item( log_item )
+
+				};
+
+			},
+
 			log_event: function ( source, listener, name, data ) { // log type = event
 
 				var log_item = {
@@ -4306,9 +4374,144 @@
 		return _pub;
 
 	};
+
+	window[ window.webextension_library_name ].modules.storage_manager = function () {
+
+		// data_info[ 0 ] - type
+		// data_info[ 1 ] - id
+		// data_info[ 2 ] - data
+		// data_info[ 3 ] - timestamp of creation
+
+		var _app = null;
+
+		var _priv = {
+
+			clean_up: () => {
+
+				chrome.storage.local.get( null, ( storage ) => {
+
+					var key_arr_to_remove = [];
+					var now_ts = Date.now();
+
+					Object.keys( storage ).forEach( ( key ) => {
+
+						var data_info = storage[ key ];
+
+						for ( var i = _app.config.storage_manager.type_duration_data_arr.length; i--; ) {
+
+							var type_duration_data = _app.config.storage_manager.type_duration_data_arr[ i ];
+
+							if ( data_info[ 0 ] === type_duration_data[ 0 ] && now_ts - data_info[ 3 ] > type_duration_data[ 1 ] ) {
+
+								key_arr_to_remove.push( key );
+
+							};
+
+						};
+
+					});
+
+					chrome.storage.local.remove( key_arr_to_remove );
+
+				});
+
+			},
+
+		};
+
+		var _pub = {
+
+			init: ( app ) => {
+
+				_app = app;
+
+				_priv.clean_up();
+
+				setInterval( _priv.clean_up, 60 * 60 * 1000 );
+
+			},
+
+			set: ( type, id, data ) => {
+
+				var storage_id = type + "_" + id;
+				var new_storage = {};
+				new_storage[ storage_id ] = [ type, id, data, Date.now() ];
+
+				return new Promise( ( resolve ) => {
+
+					chrome.storage.local.set( new_storage, resolve );
+
+				});
+
+			},
+
+			get: ( type, id ) => {
+
+				var storage_id = type + "_" + id;
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.get([ storage_id ], ( storage ) => {
+
+						if ( storage[ storage_id ] ) {
+
+							resolve( storage[ storage_id ][ 2 ] );
+
+						} else {
+
+							resolve( null );
+
+						};
+
+					});
+
+				});
+
+			},
+
+			clear: () => {
+
+				return new Promise ( ( resolve ) => {
+
+					chrome.storage.local.set( { cache: [] }, resolve );
+
+				});
+
+			},
+
+		};
+
+		return _pub;
+
+	};
 	window[ window.webextension_library_name ].modules.exec = function () {
 
+		var types = {
+
+			exec_call_data: {
+
+				_exec_call_data_flag: true,
+
+				id: "number",
+
+				parent_id: "number",
+				child_id_arr: "arr of number",
+
+				input: "",
+				output: "",
+
+			},
+
+		};
+
 		var modules = {
+
+		};
+
+		var _state = {
+
+			call_data_count: 0,
+			exec_call_data_arr: [],
 
 		};
 
@@ -4316,191 +4519,98 @@
 
 		// util functions
 
-			var exec_with_data = ( function () {
+			function exec_2 () {
 
-				var exec = function () {
+				var argument_arr = Array.from( arguments );
 
-					var namespace = arguments[ 0 ];
-					var module_name = arguments[ 1 ];
-					var method_name = arguments[ 2 ];
+				_state.call_data_count += 1;
 
-					var new_arguments = [];
+				var parent_exec_call_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
 
-					for ( var i = 0; i < arguments.length; i++ ) {
+				var exec_call_data = {
 
-						new_arguments.push( arguments[ i ] );
+					module_name: module_name,
+					method_name: method_name,
 
-					};
+					id: _state.call_data_count,
 
-					new_arguments.push( pseudo_exec );
+					parent: parent_exec_call_data,
+					exec_data_arr: [],
 
-					var exec_data = {
-
-						namespace: namespace,
-						module_name: module_name,
-						method_name: method_name,
-
-						exec_data_arr: [],
-						found: true,
-
-						arguments: new_arguments.slice( 3, -1 ),
-						output: undefined,
-
-					};
-
-					function pseudo_exec () {
-
-						var local_exec_data = exec.bind( null, namespace ).apply( null, arguments );
-
-						exec_data.exec_data_arr.push( local_exec_data );
-
-						return local_exec_data.output;
-
-					};
-
-					if ( modules[ namespace ] && modules[ namespace ][ module_name ] && modules[ namespace ][ module_name ][ method_name ] ) {
-
-						var current_namespace = namespace;
-
-					} else if ( modules[ "*" ] && modules[ "*" ][ module_name ] && modules[ "*" ][ module_name ][ method_name ] ) {
-
-						var current_namespace = "*";
-
-					} else {
-
-						var current_namespace = null;
-
-					};
-
-					if ( current_namespace ) {
-
-						try {
-
-							exec_data.output = modules[ current_namespace ][ module_name ][ method_name ].apply( null, new_arguments.slice( 3 ) )
-
-							if ( exec_data.output instanceof Promise ) {
-
-								exec_data.output = new Promise( function ( resolve ) {
-
-									exec_data.output
-										.then(function(output) {
-
-											resolve(output);
-
-										})
-										.catch(function(error) {
-
-											exec_data.error = true;
-											exec_data.stack = error.stack;
-
-											resolve( null );
-
-										});
-
-								});
-
-							};
-
-						} catch ( error ) {
-
-							exec_data.error = true;
-							exec_data.stack = error.stack;
-							exec_data.output = null;
-
-						};
-
-					} else {
-
-						exec_data.found = false;
-						exec_data.output = null;
-
-					};
-
-					return exec_data;
+					arguments: argument_arr.slice( 3 ),
+					output: null,
+					found: true,
 
 				};
 
-				return exec;
+				if ( parent_exec_call_data ) {
 
-			} () );
+					parent_exec_call_data.exec_data_arr.push( exec_call_data );
 
-			var exec_no_data = ( function () {
+				} else {
 
-				var exec = function () {
+					_state.exec_call_data_arr.push( exec_call_data );
 
-					var namespace = arguments[ 0 ];
-					var module_name = arguments[ 1 ];
-					var method_name = arguments[ 2 ];
+					setTimeout( function () {
 
-					var new_arguments = [];
+						_app.log.log_exec_call_data( exec_call_data );
 
-					for ( var i = 0; i < arguments.length; i++ ) {
-
-						new_arguments.push( arguments[ i ] );
-
-					};
-
-					new_arguments.push( _priv.exec.bind( null, namespace ) );
-
-					if ( modules[ namespace ] && modules[ namespace ][ module_name ] && modules[ namespace ][ module_name ][ method_name ] ) {
-
-						var current_namespace = namespace;
-
-					} else if ( modules[ "*" ] && modules[ "*" ][ module_name ] && modules[ "*" ][ module_name ][ method_name ] ) {
-
-						var current_namespace = "*";
-
-					} else {
-
-						var current_namespace = null;
-
-					};
-
-					if ( current_namespace ) {
-
-						try {
-
-							var output = modules[ current_namespace ][ module_name ][ method_name ].apply( null, new_arguments.slice( 3 ) );
-
-							if ( output && typeof output.then === 'function' ) {
-
-								return new Promise( ( resolve ) => {
-
-									output.then( ( result ) => {
-
-										resolve( output );
-
-									}).catch( ( error ) => {
-
-										resolve( null );
-
-									});
-
-								});
-
-							} else {
-
-								return output;
-
-							};
-
-						} catch ( error ) {
-
-							return null;
-
-						};
-
-					} else {
-
-						return null;
-
-					};
+					}, 1000 );
 
 				};
 
-				return exec;
+				var new_arguments = argument_arr.slice( 3 );
+				new_arguments.push( exec_2.bind( null, exec_call_data ) );
 
-			} () );
+				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+
+					try {
+
+						exec_call_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+
+						if ( exec_call_data.output instanceof Promise ) {
+
+							exec_call_data.output = new Promise( function ( resolve ) {
+
+								exec_call_data.output
+								.then( function ( output ) {
+
+									exec_call_data.output = output;
+									resolve( output );
+
+								})
+								.catch( function ( error ) {
+
+									exec_call_data.error = true;
+									exec_call_data.stack = error.stack;
+
+									resolve( null );
+
+								});
+
+							});
+
+						};
+
+					} catch ( error ) {
+
+						exec_call_data.error = true;
+						exec_call_data.stack = error.stack;
+						exec_call_data.output = null;
+
+					};
+
+				} else {
+
+					exec_call_data.found = false;
+
+				};
+
+				return exec_call_data.output;
+
+			};
 
 		//
 
@@ -4508,31 +4618,10 @@
 
 			exec: function () {
 
-				if ( _app.config.mode === "dev" ) {
+				var argument_arr = Array.from( arguments );
+				argument_arr.unshift( null );
 
-					var exec_data = exec_with_data.apply( null, arguments );
-
-					if ( exec_data.output instanceof Promise ) {
-
-						exec_data.output.then( () => {
-
-							_app.log.log_exec_data( exec_data );
-
-						});
-
-					} else {
-
-						_app.log.log_exec_data( exec_data );
-
-					};
-
-					return exec_data.output;
-
-				} else {
-
-					return exec_no_data.apply( null, arguments );
-
-				};
+				return exec_2.apply( null, argument_arr );
 
 			},
 
@@ -4543,6 +4632,25 @@
 			init: ( app ) => {
 
 				_app = app;
+
+			},
+
+			exec: function () {
+
+				var argument_arr = Array.from( arguments );
+				argument_arr.unshift( null );
+
+				return exec_2.apply( null, argument_arr );
+
+			},
+
+			log_exec_call_data_arr: function () {
+
+				_state.exec_call_data_arr.forEach( ( d ) => {
+
+					_app.log.log_exec_call_data( d );
+
+				});
 
 			},
 
@@ -4558,15 +4666,9 @@
 
 			},
 
-			add_module: ( namespace, module_name, module ) => {
+			add_module: ( module_name, module ) => {
 
-				if ( typeof modules[ namespace ] === "undefined" ) {
-
-					modules[ namespace ] = {};
-
-				};
-
-				modules[ namespace ][ module_name ] = module;
+				modules[ module_name ] = module;
 
 			},
 

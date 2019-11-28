@@ -16,7 +16,7 @@
 		"src/conv.js",
 		"src/cache_manager.js",
 		"src/modules.js",
-		"src/exec_modules.js",
+		"src/exec_modules_2.js",
 
 	], 'dist/webx.js', function ( err ) {
 
