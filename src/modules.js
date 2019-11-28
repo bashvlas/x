@@ -1594,57 +1594,6 @@
 				console.log( log_item.data );
 				console.groupEnd();
 
-			} else if ( log_item.type === "exec_call_data" ) {
-
-				var exec_data = log_item.exec_call_data;
-				var title = "%c " + ( log_item.app_name || "app" ) + " | exec." + exec_data.module_name + "." + exec_data.method_name;
-
-				if ( exec_data.error ) {
-
-					console.groupCollapsed( title, "color: red" );
-					console.log(exec_data.arguments);
-					console.log(exec_data.stack);
-
-				} else if (!exec_data.found) {
-
-					console.groupCollapsed( title, "color: #F0AD4E" );
-					console.log(exec_data.arguments);
-
-				} else {
-
-					console.groupCollapsed( title, "color: #5D4037" );
-					console.log(exec_data.arguments);
-					console.log( exec_data.output );
-
-				};
-
-				exec_data.exec_data_arr.forEach( function ( exec_data ) {
-
-					if ( exec_data.module_name === "log" && exec_data.method_name === "write_exec" ) {
-
-						write_log_item({
-
-							type: "normal",
-							app_name: "app",
-							arguments: exec_data.arguments,
-
-						});
-
-					} else {
-
-						write_log_item({
-
-							type: "exec_data",
-							exec_data: exec_data,
-
-						});
-
-					};
-
-				});
-
-				console.groupEnd();
-
 			};
 
 		};
@@ -1721,31 +1670,6 @@
 					app_name: state.app.name,
 
 					exec_data,
-
-				};
-
-				if ( state.app.report_manager ) {
-
-					state.app.report_manager.store_log_item( log_item );
-
-				};
-
-				if ( state.mode === "dev" ) {
-
-					write_log_item( log_item )
-
-				};
-
-			},
-
-			log_exec_call_data: function ( exec_call_data ) { // log type = exec_call_data
-
-				var log_item = {
-
-					type: "exec_call_data",
-					app_name: state.app.name,
-
-					exec_call_data,
 
 				};
 

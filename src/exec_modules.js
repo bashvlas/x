@@ -3,9 +3,9 @@
 
 		var types = {
 
-			exec_call_data: {
+			exec_data: {
 
-				_exec_call_data_flag: true,
+				_exec_data_flag: true,
 
 				id: "number",
 
@@ -26,7 +26,7 @@
 		var _state = {
 
 			call_data_count: 0,
-			exec_call_data_arr: [],
+			exec_data_arr: [],
 
 		};
 
@@ -40,18 +40,18 @@
 
 				_state.call_data_count += 1;
 
-				var parent_exec_call_data = argument_arr[ 0 ];
+				var parent_exec_data = argument_arr[ 0 ];
 				var module_name = argument_arr[ 1 ];
 				var method_name = argument_arr[ 2 ];
 
-				var exec_call_data = {
+				var exec_data = {
 
 					module_name: module_name,
 					method_name: method_name,
 
 					id: _state.call_data_count,
 
-					parent: parent_exec_call_data,
+					parent: parent_exec_data,
 					exec_data_arr: [],
 
 					arguments: argument_arr.slice( 3 ),
@@ -60,46 +60,40 @@
 
 				};
 
-				if ( parent_exec_call_data ) {
+				if ( parent_exec_data ) {
 
-					parent_exec_call_data.exec_data_arr.push( exec_call_data );
+					parent_exec_data.exec_data_arr.push( exec_data );
 
 				} else {
 
-					_state.exec_call_data_arr.push( exec_call_data );
-
-					setTimeout( function () {
-
-						_app.log.log_exec_call_data( exec_call_data );
-
-					}, 1000 );
+					_state.exec_data_arr.push( exec_data );
 
 				};
 
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_with_data.bind( null, exec_call_data ) );
+				new_arguments.push( exec_with_data.bind( null, exec_data ) );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
 					try {
 
-						exec_call_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
 
-						if ( exec_call_data.output instanceof Promise ) {
+						if ( exec_data.output instanceof Promise ) {
 
-							exec_call_data.output = new Promise( function ( resolve ) {
+							exec_data.output = new Promise( function ( resolve ) {
 
-								exec_call_data.output
+								exec_data.output
 								.then( function ( output ) {
 
-									exec_call_data.output = output;
+									exec_data.output = output;
 									resolve( output );
 
 								})
 								.catch( function ( error ) {
 
-									exec_call_data.error = true;
-									exec_call_data.stack = error.stack;
+									exec_data.error = true;
+									exec_data.stack = error.stack;
 
 									resolve( null );
 
@@ -111,19 +105,37 @@
 
 					} catch ( error ) {
 
-						exec_call_data.error = true;
-						exec_call_data.stack = error.stack;
-						exec_call_data.output = null;
+						exec_data.error = true;
+						exec_data.stack = error.stack;
+						exec_data.output = null;
 
 					};
 
 				} else {
 
-					exec_call_data.found = false;
+					exec_data.found = false;
 
 				};
 
-				return exec_call_data.output;
+				if ( parent_exec_data === null ) {
+
+					if ( exec_data.output instanceof Promise ) {
+					
+						exec_data.output.then( () => {
+
+							_app.log.log_exec_data( exec_data );
+
+						});
+
+					} else {
+
+						_app.log.log_exec_data( exec_data );
+
+					};
+
+				};
+
+				return exec_data.output;
 
 			};
 
@@ -131,12 +143,12 @@
 
 				var argument_arr = Array.from( arguments );
 
-				var parent_exec_call_data = argument_arr[ 0 ];
+				var parent_exec_data = argument_arr[ 0 ];
 				var module_name = argument_arr[ 1 ];
 				var method_name = argument_arr[ 2 ];
 
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_no_data.bind( null, exec_call_data ) );
+				new_arguments.push( exec_no_data.bind( null, exec_data ) );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
@@ -144,7 +156,7 @@
 
 						var output = modules[ module_name ][ method_name ].apply( null, new_arguments )
 
-						if ( exec_call_data.output instanceof Promise ) {
+						if ( exec_data.output instanceof Promise ) {
 
 							return new Promise( ( resolve ) => {
 
@@ -223,11 +235,11 @@
 
 			},
 
-			log_exec_call_data_arr: function () {
+			log_exec_data_arr: function () {
 
-				_state.exec_call_data_arr.forEach( ( d ) => {
+				_state.exec_data_arr.forEach( ( d ) => {
 
-					_app.log.log_exec_call_data( d );
+					_app.log.log_exec_data( d );
 
 				});
 
