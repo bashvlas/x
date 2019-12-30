@@ -139,16 +139,102 @@
 
 			};
 
-			function exec_no_data () {
+			function get_exec_data () {
 
 				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
 
 				var parent_exec_data = argument_arr[ 0 ];
 				var module_name = argument_arr[ 1 ];
 				var method_name = argument_arr[ 2 ];
 
+				var exec_data = {
+
+					module_name: module_name,
+					method_name: method_name,
+
+					id: _state.call_data_count,
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: null,
+					found: true,
+
+				};
+
+				if ( parent_exec_data ) {
+
+					parent_exec_data.exec_data_arr.push( exec_data );
+
+				} else {
+
+					_state.exec_data_arr.push( exec_data );
+
+				};
+
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_no_data.bind( null, exec_data ) );
+				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+
+				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+
+					try {
+
+						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+
+						if ( exec_data.output instanceof Promise ) {
+
+							exec_data.output = new Promise( function ( resolve ) {
+
+								exec_data.output
+								.then( function ( output ) {
+
+									exec_data.output = output;
+									resolve( output );
+
+								})
+								.catch( function ( error ) {
+
+									exec_data.error = true;
+									exec_data.stack = error.stack;
+
+									resolve( null );
+
+								});
+
+							});
+
+						};
+
+					} catch ( error ) {
+
+						exec_data.error = true;
+						exec_data.stack = error.stack;
+						exec_data.output = null;
+
+					};
+
+				} else {
+
+					exec_data.found = false;
+
+				};
+
+				return exec_data;
+
+			};
+
+			function exec_no_data () {
+
+				var argument_arr = Array.from( arguments );
+
+				var module_name = argument_arr[ 0 ];
+				var method_name = argument_arr[ 1 ];
+
+				var new_arguments = argument_arr.slice( 2 );
+				new_arguments.push( exec_no_data );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
@@ -156,11 +242,11 @@
 
 						var output = modules[ module_name ][ method_name ].apply( null, new_arguments )
 
-						if ( exec_data.output instanceof Promise ) {
+						if ( output instanceof Promise ) {
 
 							return new Promise( ( resolve ) => {
 
-								output.then( ( result ) => {
+								output.then( ( output ) => {
 
 									resolve( output );
 
@@ -208,7 +294,6 @@
 				} else {
 
 					var argument_arr = Array.from( arguments );
-					argument_arr.unshift( null );
 
 					return exec_no_data.apply( null, argument_arr );
 
@@ -228,10 +313,29 @@
 
 			exec: function () {
 
+				if ( _app.config.mode === "dev" ) {
+
+					var argument_arr = Array.from( arguments );
+					argument_arr.unshift( null );
+
+					return exec_with_data.apply( null, argument_arr );
+
+				} else {
+
+					var argument_arr = Array.from( arguments );
+
+					return exec_no_data.apply( null, argument_arr );
+
+				};
+
+			},
+
+			get_exec_data: function () {
+
 				var argument_arr = Array.from( arguments );
 				argument_arr.unshift( null );
 
-				return exec_with_data.apply( null, argument_arr );
+				return get_exec_data.apply( null, argument_arr );
 
 			},
 
@@ -323,9 +427,6 @@
 					for ( var j = 0; j < test_data_arr.length; j++ ) {
 
 						var test_data = test_data_arr[ j ];
-
-						var input_name = method_name.split( "_to_" )[ 0 ];
-						var output_name = method_name.split( "_to_" )[ 1 ];
 
 						var io = await Promise.all([
 
@@ -541,10 +642,10 @@
 
 				var style = equal_bool ? "color:green" : "color:red";
 
-				console.groupCollapsed( "%c " + exec_data.namespace + "." + exec_data.module_name + "." + exec_data.method_name, style );
+				console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
 
 				console.log( "input" );
-				console.log( input.slice( 3 ) );
+				console.log( input.slice( 2 ) );
 				console.log( "expected output" );
 				console.log( output );
 				console.log( "actual output" );
