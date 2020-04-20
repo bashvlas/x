@@ -1,6 +1,8 @@
 
 	window[ window.webextension_library_name ].modules.exec = function () {
 
+		var x = window[ window.webextension_library_name ];
+
 		var types = {
 
 			exec_data: {
@@ -27,12 +29,28 @@
 
 			call_data_count: 0,
 			exec_data_arr: [],
+			log_size: 500,
 
 		};
 
 		var _app = null;
 
 		// util functions
+
+			function serialize_exec_data ( exec_data ) {
+
+				delete exec_data.parent;
+
+				exec_data.arguments = x.convert( exec_data.arguments, [[ "simplify", 10 ]]);
+				exec_data.output = x.convert( exec_data.output, [[ "simplify", 10 ]]);
+
+				for ( var i = 0; i < exec_data.exec_data_arr.length; i++ ) {
+
+					serialize_exec_data( exec_data.exec_data_arr[ i ] );
+
+				};
+
+			};
 
 			function exec_with_data () {
 
@@ -60,13 +78,10 @@
 
 				};
 
-				if ( parent_exec_data ) {
+				if ( module_name === "meta" && method_name === "do_not_log" ) {
 
-					parent_exec_data.exec_data_arr.push( exec_data );
-
-				} else {
-
-					_state.exec_data_arr.push( exec_data );
+					parent_exec_data.do_not_log = true;
+					return;
 
 				};
 
@@ -117,18 +132,37 @@
 
 				};
 
+				if ( exec_data.do_not_log ) {
+
+					return exec_data.output;
+
+				};
+
+				if ( parent_exec_data ) {
+
+					parent_exec_data.exec_data_arr.push( exec_data );
+
+				} else {
+
+					_state.exec_data_arr.push( exec_data );
+					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
+
+				};
+
 				if ( parent_exec_data === null ) {
 
 					if ( exec_data.output instanceof Promise ) {
-					
+
 						exec_data.output.then( () => {
 
+							serialize_exec_data( exec_data );
 							_app.log.log_exec_data( exec_data );
 
 						});
 
 					} else {
 
+						serialize_exec_data( exec_data );
 						_app.log.log_exec_data( exec_data );
 
 					};
@@ -165,6 +199,9 @@
 
 				};
 
+				var new_arguments = argument_arr.slice( 3 );
+				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+
 				if ( parent_exec_data ) {
 
 					parent_exec_data.exec_data_arr.push( exec_data );
@@ -175,8 +212,139 @@
 
 				};
 
+				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+
+					try {
+
+						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+
+						if ( exec_data.output instanceof Promise ) {
+
+							exec_data.output = new Promise( function ( resolve ) {
+
+								exec_data.output
+								.then( function ( output ) {
+
+									exec_data.output = output;
+									resolve( output );
+
+								})
+								.catch( function ( error ) {
+
+									exec_data.error = true;
+									exec_data.stack = error.stack;
+
+									resolve( null );
+
+								});
+
+							});
+
+						};
+
+					} catch ( error ) {
+
+						exec_data.error = true;
+						exec_data.stack = error.stack;
+						exec_data.output = null;
+
+					};
+
+				} else {
+
+					exec_data.found = false;
+
+				};
+
+				return exec_data;
+
+			};
+
+			function stubbed_exec () {
+
+				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
+
+				var parent_exec_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
+
+				var log_item = parent_exec_data.log_item_arr[ parent_exec_data.log_index ];
+				parent_exec_data.log_index += 1;
+
+				var exec_data = {
+
+					module_name: module_name,
+					method_name: method_name,
+
+					id: _state.call_data_count,
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: log_item.output,
+					found: true,
+
+				};
+
+				parent_exec_data.exec_data_arr.push( exec_data );
+
+				if ( log_item.promise ) {
+
+					return Promise.resolve( log_item.output );
+
+				} else {
+
+					return log_item.output;
+
+				};
+
+				if ( exec_data.do_not_log ) {
+
+					return exec_data.output;
+
+				};
+
+				return exec_data.output;
+
+			};
+
+			function get_exec_data_with_stubs () {
+
+				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
+
+				var parent_exec_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
+
+				var log = argument_arr[ 3 ];
+				var log_index = 0;
+
+				var exec_data = {
+
+					module_name: module_name,
+					method_name: method_name,
+
+					id: _state.call_data_count,
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: null,
+					found: true,
+
+					log_item_arr: argument_arr[ 3 ],
+					log_index: 0,
+
+				};
+
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+				new_arguments.push( stubbed_exec.bind( null, exec_data ) );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
@@ -309,6 +477,12 @@
 
 				_app = app;
 
+				if ( app.config && app.config.log_size ) {
+
+					_state.log_size = app.config.log_size;
+
+				};
+
 			},
 
 			exec: function () {
@@ -339,11 +513,42 @@
 
 			},
 
+			get_exec_data_arr: function () {
+
+				return _state.exec_data_arr;
+
+			},
+
 			log_exec_data_arr: function () {
 
 				_state.exec_data_arr.forEach( ( d ) => {
 
 					_app.log.log_exec_data( d );
+
+				});
+
+			},
+
+			download_log: function () {
+
+				_state.exec_data_arr.forEach( ( exec_data ) => {
+
+					serialize_exec_data( exec_data );
+
+				});
+
+				var zip = new JSZip();
+				zip.file( "log.json", JSON.stringify( _state.exec_data_arr ) );
+				zip.generateAsync({
+					type: "blob",
+					compression: "DEFLATE"
+				})
+				.then( function ( content ) {
+
+					var url = URL.createObjectURL( content );
+					x.util.download_file( "log.zip", url );
+
+					// saveAs( content, "log.zip" );
 
 				});
 
@@ -438,7 +643,17 @@
 						var input = io[ 0 ];
 						var output = io[ 1 ];
 
-						if ( test_data.test_type === "live" ) {
+						if ( test_data.test_type === "log_test" ) {
+
+							input.unshift( method_name );
+							input.unshift( module_name );
+
+							var exec_data = exec_with_data.apply( null, input );
+							var equal_bool = _pub.compare( output, exec_data.output );
+
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+
+						} else if ( test_data.test_type === "live" ) {
 										
 							var webpage_data = {};
 
@@ -458,7 +673,7 @@
 							var exec_data = exec_with_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
-							_pub.log_test_case( exec_data, input, output, equal_bool );
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
 
 						} else {
 
@@ -468,7 +683,7 @@
 							var exec_data = exec_with_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
-							_pub.log_test_case( exec_data, input, output, equal_bool );
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
 
 						};
 
@@ -638,22 +853,31 @@
 
 			},
 
-			log_test_case: function ( exec_data, input, output, equal_bool ) {
+			log_test_case: function ( test_data, exec_data, input, output, equal_bool ) {
 
-				var style = equal_bool ? "color:green" : "color:red";
+				if ( test_data.test_type === "log_test" ) {
 
-				console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
+					console.log( "log_test" );
+					console.log( exec_data );
 
-				console.log( "input" );
-				console.log( input.slice( 2 ) );
-				console.log( "expected output" );
-				console.log( output );
-				console.log( "actual output" );
-				console.log( exec_data.output );
+				} else {
 
-				_app.log.log_exec_data( exec_data );
+					var style = equal_bool ? "color:green" : "color:red";
 
-				console.groupEnd();
+					console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
+
+					console.log( "input" );
+					console.log( input.slice( 2 ) );
+					console.log( "expected output" );
+					console.log( output );
+					console.log( "actual output" );
+					console.log( exec_data.output );
+
+					_app.log.log_exec_data( exec_data );
+
+					console.groupEnd();
+
+				};
 
 			}
 

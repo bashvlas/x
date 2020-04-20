@@ -306,13 +306,17 @@
 
 							return "...";
 
-						} else if (
-							output instanceof Function ||
-							output instanceof Element ||
-							output instanceof Window
-						) {
+						} else if ( output instanceof Function ) {
 
-							output = "***";
+							output = "Function";
+
+						} else if ( output instanceof Element ) {
+
+							output = "Element";
+
+						} else if ( output instanceof Window ) {
+
+							output = "Window";
 
 						} else if ( typeof output === "object" && output !== null ) {
 

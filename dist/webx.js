@@ -2290,13 +2290,17 @@
 
 							return "...";
 
-						} else if (
-							output instanceof Function ||
-							output instanceof Element ||
-							output instanceof Window
-						) {
+						} else if ( output instanceof Function ) {
 
-							output = "***";
+							output = "Function";
+
+						} else if ( output instanceof Element ) {
+
+							output = "Element";
+
+						} else if ( output instanceof Window ) {
+
+							output = "Window";
 
 						} else if ( typeof output === "object" && output !== null ) {
 
@@ -2799,325 +2803,6 @@
 			},
 
 		};
-
-	};
-
-	window[ window.webextension_library_name ].modules.exec_tester = function () {
-
-		var x = window[ window.webextension_library_name ];
-
-		var _state = {
-
-			service_hash: {}
-
-		};
-
-		var _priv = {
-
-
-		};
-
-		var _pub = {
-
-			exec: ( service_name, method_name, input_data ) => {
-
-				return _state.service_hash[ service_name ][ method_name ]( input_data, service_hub );
-
-			},
-
-			register: ( service_name, method_hash ) => {
-
-				_state.service_hash[ service_name ] = method_hash;
-
-			},
-
-			test_service: async ( service_name, test_case_url ) => {
-
-				var test_case_data_arr_hash = await x.ajax({ method: "get_json", url: test_case_url });
-				var method_name_arr = Object.keys( test_case_data_arr_hash );
-
-				for ( var i = 0; i < method_name_arr.length; i++ ) {
-
-					var method_name = method_name_arr[ i ];
-					var test_case_data_arr = test_case_data_arr_hash[ method_name ];
-
-					for ( var j = 0; j < test_case_data_arr.length; j++ ) {
-
-						var test_case_data = test_case_data_arr[ j ];
-
-						var test_result = await x.service_hub.test( service_name, method_name, test_case_data );
-
-						x.service_hub.log_test_result( test_result );
-
-					};
-
-				};
-
-			},
-
-			test: async ( service_name, method_name, test_case_data ) => {
-
-				var input_data = test_case_data.input_data;
-				var expected_log = test_case_data.expected_log;
-				var expected_output_data = test_case_data.output_data;
-
-				var call_index = 0;
-				var fn = _state.service_hash[ service_name ][ method_name ];
-				var actual_log = [];
-
-				var actual_output_data = fn( input_data, ( service_name, method_name, input_data ) => {
-
-					var expected_response = expected_log[ call_index ][ 3 ];
-					var async_flag = expected_log[ call_index ][ 4 ];
-
-					actual_log.push([ service_name, method_name, input_data, expected_response, async_flag ]);
-
-					call_index += 1;
-
-					if ( async_flag ) {
-
-						return Promise.resolve( expected_response );
-
-					} else {
-
-						return expected_response;
-
-					};
-
-				});
-
-				if ( typeof actual_output_data.then === 'function' ) {
-
-					actual_output_data = await actual_output_data;
-
-				};
-
-				var test_result = {};
-
-				test_result.service_name = service_name;
-				test_result.method_name = method_name;
-
-				test_result.input_data = input_data;
-				test_result.expected_output_data = expected_output_data;
-				test_result.actual_output_data = actual_output_data;
-
-				test_result.log_is_valid = x.tester.compare( expected_log, actual_log );
-				test_result.output_is_valid = x.tester.compare( expected_output_data, actual_output_data );
-
-				test_result.expected_log = expected_log;
-				test_result.actual_log = actual_log;
-
-				// expected_log.forEach( ( item, index ) => {
-
-				// 	console.log( x.tester.compare( expected_log[ index ], actual_log[ index ] ) );
-
-				// });
-
-				return test_result;
-
-			},
-
-			log_test_result: ( test_result ) => {
-
-				var title = "%c " + test_result.service_name + ": " + test_result.method_name;
-
-				if ( test_result.log_is_valid && test_result.output_is_valid ) {
-
-					console.groupCollapsed( title, "color: green" );
-
-					console.log( "input_data", );
-					console.log( test_result.input_data );
-
-					console.log( "expected_log", );
-					console.log( test_result.expected_log );
-
-					console.log( "actual_log", );
-					console.log( test_result.actual_log );
-
-					console.log( "expected_output_data", );
-					console.log( test_result.expected_output_data );
-
-					console.log( "actual_output_data", );
-					console.log( test_result.actual_output_data );
-
-				} else {
-
-					console.groupCollapsed( title, "color: red" );
-
-					console.log( "input_data", );
-					console.log( test_result.input_data );
-
-					console.log( "expected_log", );
-					console.log( test_result.expected_log );
-
-					console.log( "actual_log", );
-					console.log( test_result.actual_log );
-
-					console.log( "expected_output_data", );
-					console.log( test_result.expected_output_data );
-
-					console.log( "actual_output_data", );
-					console.log( test_result.actual_output_data );
-
-				};
-
-				console.groupEnd();
-
-			},
-
-			// module testing
-
-			test_module: async ( module_instance, module_name, test_case_url ) => {
-
-				var test_case_data_arr_hash = await x.ajax({ method: "get_json", url: test_case_url });
-				var method_name_arr = Object.keys( test_case_data_arr_hash );
-
-				for ( var i = 0; i < method_name_arr.length; i++ ) {
-
-					var method_name = method_name_arr[ i ];
-					var test_case_data_arr = test_case_data_arr_hash[ method_name ];
-
-					for ( var j = 0; j < test_case_data_arr.length; j++ ) {
-
-						var test_case_data = test_case_data_arr[ j ];
-
-						var test_result = await x.service_hub.test_method( module_instance, module_name, method_name, test_case_data );
-
-						x.service_hub.log_test_method_result( test_result );
-
-					};
-
-				};
-
-			},
-
-			test_method: async ( module_instance, module_name, method_name, test_case_data ) => {
-
-				var input_data = test_case_data.input_data;
-				var expected_log = test_case_data.expected_log;
-				var expected_output_data = test_case_data.output_data;
-
-				var call_index = 0;
-				var fn = module_instance[ "_priv" ][ method_name ];
-				var actual_log = [];
-				var test_result = {};
-
-				try {
-
-					var actual_output_data = fn( input_data, ( service_name, method_name, input_data ) => {
-
-						var expected_response = expected_log[ call_index ][ 3 ];
-						var async_flag = expected_log[ call_index ][ 4 ];
-
-						actual_log.push([ service_name, method_name, input_data, expected_response, async_flag ]);
-
-						call_index += 1;
-
-						if ( async_flag ) {
-
-							return Promise.resolve( expected_response );
-
-						} else {
-
-							return expected_response;
-
-						};
-
-					});
-
-					if ( typeof actual_output_data.then === 'function' ) {
-
-						actual_output_data = await actual_output_data;
-
-					};
-
-				} catch ( e ) {
-
-					var actual_output_data = null;
-					test_result.error = e;
-
-				};
-
-				test_result.module_name = module_name;
-				test_result.method_name = method_name;
-
-				test_result.input_data = input_data;
-				test_result.expected_output_data = expected_output_data;
-				test_result.actual_output_data = actual_output_data;
-
-				test_result.log_is_valid = x.tester.compare( expected_log, actual_log );
-				test_result.output_is_valid = x.tester.compare( expected_output_data, actual_output_data );
-
-				test_result.expected_log = expected_log;
-				test_result.actual_log = actual_log;
-
-				// expected_log.forEach( ( item, index ) => {
-
-				// 	console.log( x.tester.compare( expected_log[ index ], actual_log[ index ] ) );
-
-				// });
-
-				return test_result;
-
-			},
-
-			log_test_method_result: ( test_result ) => {
-
-				var title = "%c " + test_result.module_name + ": " + test_result.method_name;
-
-				if ( test_result.log_is_valid && test_result.output_is_valid ) {
-
-					console.groupCollapsed( title, "color: green" );
-
-					console.log( "input_data", );
-					console.log( test_result.input_data );
-
-					console.log( "expected_log", );
-					console.log( test_result.expected_log );
-
-					console.log( "actual_log", );
-					console.log( test_result.actual_log );
-
-					console.log( "expected_output_data", );
-					console.log( test_result.expected_output_data );
-
-					console.log( "actual_output_data", );
-					console.log( test_result.actual_output_data );
-
-				} else {
-
-					console.groupCollapsed( title, "color: red" );
-
-					console.log( "input_data", );
-					console.log( test_result.input_data );
-
-					console.log( "expected_log", );
-					console.log( test_result.expected_log );
-
-					console.log( "actual_log", );
-					console.log( test_result.actual_log );
-
-					console.log( "expected_output_data", );
-					console.log( test_result.expected_output_data );
-
-					console.log( "actual_output_data", );
-					console.log( test_result.actual_output_data );
-
-					if ( test_result.error ) {
-
-						console.error( test_result.error );
-
-					};
-
-				};
-
-				console.groupEnd();
-
-			},
-
-		};
-
-		return _pub;
 
 	};
 
@@ -4321,11 +4006,13 @@
 
 						var data_info = storage[ key ];
 
+						if ( !data_info ) { return; };
+
 						for ( var i = _app.config.storage_manager.type_duration_data_arr.length; i--; ) {
 
 							var type_duration_data = _app.config.storage_manager.type_duration_data_arr[ i ];
 
-							if ( data_info[ 0 ] === type_duration_data[ 0 ] && now_ts - data_info[ 3 ] > type_duration_data[ 1 ] ) {
+							if ( type_duration_data && data_info[ 0 ] === type_duration_data[ 0 ] && now_ts - data_info[ 3 ] > type_duration_data[ 1 ] ) {
 
 								key_arr_to_remove.push( key );
 
@@ -4537,7 +4224,102 @@
 		};
 
 	};
+
+	window[ window.webextension_library_name ].modules.injected_script_manager = function () {
+
+		var _state = {
+
+			expression_index: 0,
+
+		};
+
+		var _pub = {
+
+			init: async ( app ) => {
+
+			},
+
+			get_expression_value: ( expression ) => {
+
+				_state.expression_index += 1;
+
+				return new Promise( ( resolve ) => {
+
+					var expression_index = _state.expression_index;
+
+					var timeout = setTimeout( () => {
+
+						clearTimeout( timeout );
+						document.removeEventListener( "webx_expression_value_available", listener );
+
+						resolve( null );
+
+					}, 2 * 1000 );
+
+					var listener = ( event ) => {
+
+						if ( event.detail && event.detail && event.detail.expression_index === expression_index ) {
+
+							clearTimeout( timeout );
+							document.removeEventListener( "webx_expression_value_available", listener );
+
+							resolve( event.detail.expression_value );
+
+						};
+
+					};
+
+					document.addEventListener( "webx_expression_value_available", listener );
+
+					$( document.body ).append( `
+
+						<script>
+
+							( function () {
+
+								var expression_index = ${ expression_index };
+
+								try {
+
+									var expression_value = ${ expression };
+
+								} catch ( e ) {
+
+									var expression_value = null;
+
+								};
+
+								var event = new CustomEvent( 'webx_expression_value_available', {
+
+									detail: {
+
+										expression_value: expression_value,
+										expression_index: expression_index,
+
+									},
+
+								});
+
+								document.dispatchEvent( event );
+
+							} () );
+
+						</script>
+
+					` );
+
+				});
+
+			},
+
+		};
+
+		return _pub;
+
+	};
 	window[ window.webextension_library_name ].modules.exec = function () {
+
+		var x = window[ window.webextension_library_name ];
 
 		var types = {
 
@@ -4565,12 +4347,28 @@
 
 			call_data_count: 0,
 			exec_data_arr: [],
+			log_size: 500,
 
 		};
 
 		var _app = null;
 
 		// util functions
+
+			function serialize_exec_data ( exec_data ) {
+
+				delete exec_data.parent;
+
+				exec_data.arguments = x.convert( exec_data.arguments, [[ "simplify", 10 ]]);
+				exec_data.output = x.convert( exec_data.output, [[ "simplify", 10 ]]);
+
+				for ( var i = 0; i < exec_data.exec_data_arr.length; i++ ) {
+
+					serialize_exec_data( exec_data.exec_data_arr[ i ] );
+
+				};
+
+			};
 
 			function exec_with_data () {
 
@@ -4598,13 +4396,10 @@
 
 				};
 
-				if ( parent_exec_data ) {
+				if ( module_name === "meta" && method_name === "do_not_log" ) {
 
-					parent_exec_data.exec_data_arr.push( exec_data );
-
-				} else {
-
-					_state.exec_data_arr.push( exec_data );
+					parent_exec_data.do_not_log = true;
+					return;
 
 				};
 
@@ -4655,18 +4450,37 @@
 
 				};
 
+				if ( exec_data.do_not_log ) {
+
+					return exec_data.output;
+
+				};
+
+				if ( parent_exec_data ) {
+
+					parent_exec_data.exec_data_arr.push( exec_data );
+
+				} else {
+
+					_state.exec_data_arr.push( exec_data );
+					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
+
+				};
+
 				if ( parent_exec_data === null ) {
 
 					if ( exec_data.output instanceof Promise ) {
-					
+
 						exec_data.output.then( () => {
 
+							serialize_exec_data( exec_data );
 							_app.log.log_exec_data( exec_data );
 
 						});
 
 					} else {
 
+						serialize_exec_data( exec_data );
 						_app.log.log_exec_data( exec_data );
 
 					};
@@ -4703,6 +4517,9 @@
 
 				};
 
+				var new_arguments = argument_arr.slice( 3 );
+				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+
 				if ( parent_exec_data ) {
 
 					parent_exec_data.exec_data_arr.push( exec_data );
@@ -4713,8 +4530,139 @@
 
 				};
 
+				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+
+					try {
+
+						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+
+						if ( exec_data.output instanceof Promise ) {
+
+							exec_data.output = new Promise( function ( resolve ) {
+
+								exec_data.output
+								.then( function ( output ) {
+
+									exec_data.output = output;
+									resolve( output );
+
+								})
+								.catch( function ( error ) {
+
+									exec_data.error = true;
+									exec_data.stack = error.stack;
+
+									resolve( null );
+
+								});
+
+							});
+
+						};
+
+					} catch ( error ) {
+
+						exec_data.error = true;
+						exec_data.stack = error.stack;
+						exec_data.output = null;
+
+					};
+
+				} else {
+
+					exec_data.found = false;
+
+				};
+
+				return exec_data;
+
+			};
+
+			function stubbed_exec () {
+
+				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
+
+				var parent_exec_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
+
+				var log_item = parent_exec_data.log_item_arr[ parent_exec_data.log_index ];
+				parent_exec_data.log_index += 1;
+
+				var exec_data = {
+
+					module_name: module_name,
+					method_name: method_name,
+
+					id: _state.call_data_count,
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: log_item.output,
+					found: true,
+
+				};
+
+				parent_exec_data.exec_data_arr.push( exec_data );
+
+				if ( log_item.promise ) {
+
+					return Promise.resolve( log_item.output );
+
+				} else {
+
+					return log_item.output;
+
+				};
+
+				if ( exec_data.do_not_log ) {
+
+					return exec_data.output;
+
+				};
+
+				return exec_data.output;
+
+			};
+
+			function get_exec_data_with_stubs () {
+
+				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
+
+				var parent_exec_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
+
+				var log = argument_arr[ 3 ];
+				var log_index = 0;
+
+				var exec_data = {
+
+					module_name: module_name,
+					method_name: method_name,
+
+					id: _state.call_data_count,
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: null,
+					found: true,
+
+					log_item_arr: argument_arr[ 3 ],
+					log_index: 0,
+
+				};
+
 				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+				new_arguments.push( stubbed_exec.bind( null, exec_data ) );
 
 				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
 
@@ -4847,6 +4795,12 @@
 
 				_app = app;
 
+				if ( app.config && app.config.log_size ) {
+
+					_state.log_size = app.config.log_size;
+
+				};
+
 			},
 
 			exec: function () {
@@ -4877,11 +4831,42 @@
 
 			},
 
+			get_exec_data_arr: function () {
+
+				return _state.exec_data_arr;
+
+			},
+
 			log_exec_data_arr: function () {
 
 				_state.exec_data_arr.forEach( ( d ) => {
 
 					_app.log.log_exec_data( d );
+
+				});
+
+			},
+
+			download_log: function () {
+
+				_state.exec_data_arr.forEach( ( exec_data ) => {
+
+					serialize_exec_data( exec_data );
+
+				});
+
+				var zip = new JSZip();
+				zip.file( "log.json", JSON.stringify( _state.exec_data_arr ) );
+				zip.generateAsync({
+					type: "blob",
+					compression: "DEFLATE"
+				})
+				.then( function ( content ) {
+
+					var url = URL.createObjectURL( content );
+					x.util.download_file( "log.zip", url );
+
+					// saveAs( content, "log.zip" );
 
 				});
 
@@ -4976,7 +4961,17 @@
 						var input = io[ 0 ];
 						var output = io[ 1 ];
 
-						if ( test_data.test_type === "live" ) {
+						if ( test_data.test_type === "log_test" ) {
+
+							input.unshift( method_name );
+							input.unshift( module_name );
+
+							var exec_data = exec_with_data.apply( null, input );
+							var equal_bool = _pub.compare( output, exec_data.output );
+
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+
+						} else if ( test_data.test_type === "live" ) {
 										
 							var webpage_data = {};
 
@@ -4996,7 +4991,7 @@
 							var exec_data = exec_with_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
-							_pub.log_test_case( exec_data, input, output, equal_bool );
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
 
 						} else {
 
@@ -5006,7 +5001,7 @@
 							var exec_data = exec_with_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
-							_pub.log_test_case( exec_data, input, output, equal_bool );
+							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
 
 						};
 
@@ -5176,22 +5171,31 @@
 
 			},
 
-			log_test_case: function ( exec_data, input, output, equal_bool ) {
+			log_test_case: function ( test_data, exec_data, input, output, equal_bool ) {
 
-				var style = equal_bool ? "color:green" : "color:red";
+				if ( test_data.test_type === "log_test" ) {
 
-				console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
+					console.log( "log_test" );
+					console.log( exec_data );
 
-				console.log( "input" );
-				console.log( input.slice( 2 ) );
-				console.log( "expected output" );
-				console.log( output );
-				console.log( "actual output" );
-				console.log( exec_data.output );
+				} else {
 
-				_app.log.log_exec_data( exec_data );
+					var style = equal_bool ? "color:green" : "color:red";
 
-				console.groupEnd();
+					console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
+
+					console.log( "input" );
+					console.log( input.slice( 2 ) );
+					console.log( "expected output" );
+					console.log( output );
+					console.log( "actual output" );
+					console.log( exec_data.output );
+
+					_app.log.log_exec_data( exec_data );
+
+					console.groupEnd();
+
+				};
 
 			}
 
