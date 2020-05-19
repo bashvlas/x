@@ -13,6 +13,60 @@
 
 		return {
 
+			compare: function ( obj_1, obj_2 ) {
+
+				if ( obj_1 === obj_2 ) {
+
+					return true;
+
+				} else if ( obj_1 instanceof Date && obj_2 instanceof Date ) {
+
+					return obj_1.getTime() === obj_2.getTime();
+
+				} else if ( obj_1 === null && obj_2 === null ) {
+
+					return true;
+
+				} else if ( typeof obj_1 === "object" && typeof obj_2 === "object" && obj_1 !== null && obj_2 !== null ) {
+
+					var key_arr_1 = Object.keys( obj_1 );
+					var key_arr_2 = Object.keys( obj_2 );
+					var equal;
+
+					for ( var i = key_arr_1.length; i--; ) {
+
+						equal = x.util.compare( obj_1[ key_arr_1[ i ] ], obj_2[ key_arr_1[ i ] ] );
+
+						if ( equal === false ) {
+
+							return false;
+
+						};
+
+					};
+
+					for ( var i = key_arr_2.length; i--; ) {
+
+						equal = x.util.compare( obj_1[ key_arr_2[ i ] ], obj_2[ key_arr_2[ i ] ] );
+
+						if ( equal === false ) {
+
+							return false;
+
+						};
+
+					};
+
+					return true;
+
+				} else {
+
+					return false;
+
+				};
+
+			},
+
 			get_scrollbar_width () {
 
 				var div = document.createElement('div');
@@ -4401,6 +4455,11 @@
 					parent_exec_data.do_not_log = true;
 					return;
 
+				} else if ( module_name === "meta" && method_name === "do_log" ) {
+
+					parent_exec_data.do_not_log = false;
+					return;
+
 				};
 
 				var new_arguments = argument_arr.slice( 3 );
@@ -4450,12 +4509,6 @@
 
 				};
 
-				if ( exec_data.do_not_log ) {
-
-					return exec_data.output;
-
-				};
-
 				if ( parent_exec_data ) {
 
 					parent_exec_data.exec_data_arr.push( exec_data );
@@ -4473,15 +4526,31 @@
 
 						exec_data.output.then( () => {
 
-							serialize_exec_data( exec_data );
-							_app.log.log_exec_data( exec_data );
+							if ( exec_data.do_not_log ) {
+
+								//
+
+							} else {
+
+								// serialize_exec_data( exec_data );
+								_app.log.log_exec_data( exec_data );
+
+							};
 
 						});
 
 					} else {
 
-						serialize_exec_data( exec_data );
-						_app.log.log_exec_data( exec_data );
+						if ( exec_data.do_not_log ) {
+
+							//
+
+						} else {
+
+							// serialize_exec_data( exec_data );
+							_app.log.log_exec_data( exec_data );
+
+						};
 
 					};
 

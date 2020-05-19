@@ -83,6 +83,11 @@
 					parent_exec_data.do_not_log = true;
 					return;
 
+				} else if ( module_name === "meta" && method_name === "do_log" ) {
+
+					parent_exec_data.do_not_log = false;
+					return;
+
 				};
 
 				var new_arguments = argument_arr.slice( 3 );
@@ -132,12 +137,6 @@
 
 				};
 
-				if ( exec_data.do_not_log ) {
-
-					return exec_data.output;
-
-				};
-
 				if ( parent_exec_data ) {
 
 					parent_exec_data.exec_data_arr.push( exec_data );
@@ -155,15 +154,31 @@
 
 						exec_data.output.then( () => {
 
-							serialize_exec_data( exec_data );
-							_app.log.log_exec_data( exec_data );
+							if ( exec_data.do_not_log ) {
+
+								//
+
+							} else {
+
+								// serialize_exec_data( exec_data );
+								_app.log.log_exec_data( exec_data );
+
+							};
 
 						});
 
 					} else {
 
-						serialize_exec_data( exec_data );
-						_app.log.log_exec_data( exec_data );
+						if ( exec_data.do_not_log ) {
+
+							//
+
+						} else {
+
+							// serialize_exec_data( exec_data );
+							_app.log.log_exec_data( exec_data );
+
+						};
 
 					};
 
