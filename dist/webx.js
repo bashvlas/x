@@ -4435,9 +4435,15 @@
 
 				var top_level_exec_data = exec_data;
 
-				while ( top_level_exec_data.parent ) {
+				// while ( top_level_exec_data.parent ) {
 
-					top_level_exec_data = top_level_exec_data.parent;
+				// 	top_level_exec_data = top_level_exec_data.parent;
+
+				// };
+
+				if ( exec_data.parent || top_level_exec_data.do_not_log ) {
+
+					return;
 
 				};
 
@@ -4447,7 +4453,9 @@
 
 					var storage = {};
 
-					storage[ exec_data_name ] = JSON.stringify( serialize_exec_data( top_level_exec_data ) );
+					serialize_exec_data( top_level_exec_data );
+
+					storage[ exec_data_name ] = JSON.stringify( top_level_exec_data );
 
 					chrome.storage.local.set( storage );
 
@@ -4553,7 +4561,7 @@
 
 				};
 
-				store_exec_data( exec_data );
+				// store_exec_data( exec_data );
 
 				if ( parent_exec_data === null ) {
 
