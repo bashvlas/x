@@ -27,6 +27,7 @@
 
 		var _state = {
 
+			app_name: "app_name",
 			call_data_count: 0,
 			exec_data_arr: [],
 			log_size: 500,
@@ -52,6 +53,38 @@
 
 			};
 
+			function store_exec_data ( exec_data ) {
+
+				var top_level_exec_data = exec_data;
+
+				// while ( top_level_exec_data.parent ) {
+
+				// 	top_level_exec_data = top_level_exec_data.parent;
+
+				// };
+
+				if ( exec_data.parent || top_level_exec_data.do_not_log ) {
+
+					return;
+
+				};
+
+				if ( !top_level_exec_data.do_not_log ) {
+
+					var exec_data_name = "_exec_data_" + _app.name + "_" + _app.id + "_" + top_level_exec_data.id;
+
+					var storage = {};
+
+					serialize_exec_data( top_level_exec_data );
+
+					storage[ exec_data_name ] = JSON.stringify( top_level_exec_data );
+
+					chrome.storage.local.set( storage );
+
+				};
+
+			};
+
 			function exec_with_data () {
 
 				var argument_arr = Array.from( arguments );
@@ -64,10 +97,12 @@
 
 				var exec_data = {
 
+					app_name: _state.app_name,
 					module_name: module_name,
 					method_name: method_name,
 
 					id: _state.call_data_count,
+					ts: Date.now(),
 
 					parent: parent_exec_data,
 					exec_data_arr: [],
@@ -148,6 +183,8 @@
 
 				};
 
+				// store_exec_data( exec_data );
+
 				if ( parent_exec_data === null ) {
 
 					if ( exec_data.output instanceof Promise ) {
@@ -200,10 +237,12 @@
 
 				var exec_data = {
 
+					app_name: _state.app_name,
 					module_name: module_name,
 					method_name: method_name,
 
 					id: _state.call_data_count,
+					ts: Date.now(),
 
 					parent: parent_exec_data,
 					exec_data_arr: [],
@@ -290,10 +329,12 @@
 
 				var exec_data = {
 
+					app_name: _state.app_name,
 					module_name: module_name,
 					method_name: method_name,
 
 					id: _state.call_data_count,
+					ts: Date.now(),
 
 					parent: parent_exec_data,
 					exec_data_arr: [],
@@ -341,10 +382,12 @@
 
 				var exec_data = {
 
+					app_name: _state.app_name,
 					module_name: module_name,
 					method_name: method_name,
 
 					id: _state.call_data_count,
+					ts: Date.now(),
 
 					parent: parent_exec_data,
 					exec_data_arr: [],
@@ -492,6 +535,8 @@
 
 				_app = app;
 
+				_state.app_name = app.name;
+
 				if ( app.config && app.config.log_size ) {
 
 					_state.log_size = app.config.log_size;
@@ -539,6 +584,39 @@
 				_state.exec_data_arr.forEach( ( d ) => {
 
 					_app.log.log_exec_data( d );
+
+				});
+
+			},
+
+			log_total_exec_data_arr: function () {
+
+				var total_exec_data_arr = [];
+
+				chrome.storage.local.get( null, ( storage ) => {
+
+					for ( const key in storage ) {
+
+						if ( key.indexOf( "_exec_data_" ) === 0 ) {
+
+							exec_data = JSON.parse( storage[ key ] );
+							total_exec_data_arr.push( exec_data );
+
+						};
+
+					};
+
+					total_exec_data_arr.sort( ( a, b ) => {
+
+						return a.ts - b.ts;
+
+					});
+
+					total_exec_data_arr.forEach( ( exec_data ) => {
+
+						_app.log.log_exec_data( exec_data );
+
+					});
 
 				});
 
@@ -633,9 +711,11 @@
 
 			},
 
-			test_module: async function ( exec_with_data, module_name, json_url ) {
+			test_module: async function ( get_exec_data, module_name, json5_url ) {
 
-				var test_info = await x.ajax({ method: "get_json", url: json_url });
+				var result = await fetch( json5_url );
+				var text = await result.text();
+				var test_info = JSON5.parse( text );
 
 				var method_name_arr = Object.keys( test_info );
 
@@ -663,7 +743,7 @@
 							input.unshift( method_name );
 							input.unshift( module_name );
 
-							var exec_data = exec_with_data.apply( null, input );
+							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
@@ -685,7 +765,7 @@
 							input.unshift( method_name );
 							input.unshift( module_name );
 
-							var exec_data = exec_with_data.apply( null, input );
+							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
@@ -695,7 +775,7 @@
 							input.unshift( method_name );
 							input.unshift( module_name );
 
-							var exec_data = exec_with_data.apply( null, input );
+							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
@@ -878,7 +958,6 @@
 				} else {
 
 					var style = equal_bool ? "color:green" : "color:red";
-
 					console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
 
 					console.log( "input" );
@@ -888,13 +967,23 @@
 					console.log( "actual output" );
 					console.log( exec_data.output );
 
+					console.groupCollapsed( `%c new_test_data`, "color: grey" );
+
+					var new_test_data = JSON.parse( JSON.stringify( test_data ) );
+					new_test_data.output = exec_data.output;
+					new_test_data.input = new_test_data.input.slice( 2 );
+
+					console.log( JSON.stringify( new_test_data, null, "\t" ) );
+
+					console.groupEnd();
+
 					_app.log.log_exec_data( exec_data );
 
 					console.groupEnd();
 
 				};
 
-			}
+			},
 
 		};
 

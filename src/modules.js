@@ -1348,7 +1348,7 @@
 				var log_item = {
 
 					type: "exec_data",
-					app_name: state.app.name,
+					app_name: exec_data.app_name,
 
 					exec_data,
 

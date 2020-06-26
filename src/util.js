@@ -6,6 +6,12 @@
 
 		return {
 
+			get_unique_id: function () {
+
+				return Date.now() + "_" + Math.random().toString(36).substr(2, 9) + "_" + Math.round( Math.random() * 999999999 );
+
+			},
+
 			compare: function ( obj_1, obj_2 ) {
 
 				if ( obj_1 === obj_2 ) {
