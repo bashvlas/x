@@ -4433,33 +4433,32 @@
 
 			function store_exec_data ( exec_data ) {
 
+				console.log( "store_exec_data", exec_data );
+
 				var top_level_exec_data = exec_data;
 
-				// while ( top_level_exec_data.parent ) {
+				// if ( exec_data.parent || top_level_exec_data.do_not_log ) {
 
-				// 	top_level_exec_data = top_level_exec_data.parent;
+				// 	return;
 
 				// };
 
-				if ( exec_data.parent || top_level_exec_data.do_not_log ) {
-
-					return;
-
-				};
-
-				if ( !top_level_exec_data.do_not_log ) {
+				// if ( !top_level_exec_data.do_not_log ) {
 
 					var exec_data_name = "_exec_data_" + _app.name + "_" + _app.id + "_" + top_level_exec_data.id;
 
-					var storage = {};
-
 					serialize_exec_data( top_level_exec_data );
 
-					storage[ exec_data_name ] = JSON.stringify( top_level_exec_data );
+					localforage.setItem( exec_data_name, top_level_exec_data )
 
-					chrome.storage.local.set( storage );
+					// var storage = {};
 
-				};
+
+					// storage[ exec_data_name ] = JSON.stringify( top_level_exec_data );
+
+					// chrome.storage.local.set( storage );
+
+				// };
 
 			};
 
@@ -4478,6 +4477,8 @@
 					app_name: _state.app_name,
 					module_name: module_name,
 					method_name: method_name,
+
+					finished: false,
 
 					id: _state.call_data_count,
 					ts: Date.now(),
@@ -4503,6 +4504,17 @@
 
 				};
 
+				if ( parent_exec_data ) {
+
+					parent_exec_data.exec_data_arr.push( exec_data );
+
+				} else {
+
+					_state.exec_data_arr.push( exec_data );
+					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
+
+				};
+
 				var new_arguments = argument_arr.slice( 3 );
 				new_arguments.push( exec_with_data.bind( null, exec_data ) );
 
@@ -4520,19 +4532,33 @@
 								.then( function ( output ) {
 
 									exec_data.output = output;
+									exec_data.finished = true;
+
+									handle_exec_data_finished( exec_data );
+
 									resolve( output );
 
 								})
 								.catch( function ( error ) {
 
+									exec_data.output = null;
 									exec_data.error = true;
 									exec_data.stack = error.stack;
+									exec_data.finished = true;
+
+									handle_exec_data_finished( exec_data );
 
 									resolve( null );
 
 								});
 
 							});
+
+						} else {
+
+							exec_data.finished = true;
+
+							handle_exec_data_finished( exec_data );
 
 						};
 
@@ -4541,65 +4567,71 @@
 						exec_data.error = true;
 						exec_data.stack = error.stack;
 						exec_data.output = null;
+						exec_data.finished = true;
+
+						handle_exec_data_finished( exec_data );
 
 					};
 
 				} else {
 
 					exec_data.found = false;
+					exec_data.finished = true;
+
+					handle_exec_data_finished( exec_data );
 
 				};
 
-				if ( parent_exec_data ) {
+				return exec_data.output;
 
-					parent_exec_data.exec_data_arr.push( exec_data );
+			};
 
-				} else {
+			function all_exec_data_are_finished ( exec_data ) {
 
-					_state.exec_data_arr.push( exec_data );
-					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
+				if ( exec_data.finished ) {
 
-				};
+					for ( var i = exec_data.exec_data_arr.length; i--; ) {
 
-				// store_exec_data( exec_data );
+						if ( exec_data.exec_data_arr[ i ].finished === false || all_exec_data_are_finished( exec_data.exec_data_arr[ i ] ) === false ) {
 
-				if ( parent_exec_data === null ) {
-
-					if ( exec_data.output instanceof Promise ) {
-
-						exec_data.output.then( () => {
-
-							if ( exec_data.do_not_log ) {
-
-								//
-
-							} else {
-
-								// serialize_exec_data( exec_data );
-								_app.log.log_exec_data( exec_data );
-
-							};
-
-						});
-
-					} else {
-
-						if ( exec_data.do_not_log ) {
-
-							//
-
-						} else {
-
-							// serialize_exec_data( exec_data );
-							_app.log.log_exec_data( exec_data );
+							return false;
 
 						};
 
 					};
 
+					return true;
+
+				} else {
+
+					return false;
+
 				};
 
-				return exec_data.output;
+			};
+
+			function handle_exec_data_finished ( exec_data ) {
+
+				// find the top-most exec_data
+
+					var top_level_exec_data = exec_data;
+
+					while ( top_level_exec_data.parent ) {
+
+						top_level_exec_data = top_level_exec_data.parent;
+
+					};
+
+				// check recursively if all child exec_datas are finished
+
+					var all_finished = all_exec_data_are_finished( top_level_exec_data );
+
+					if ( all_finished ) {
+
+						store_exec_data( top_level_exec_data );
+						_app.log.log_exec_data( top_level_exec_data );
+
+					};
 
 			};
 
