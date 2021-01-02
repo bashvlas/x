@@ -712,17 +712,6 @@
 
 		return {
 
-			load_config: function () {
-
-				return x.ajax({
-
-					method: "get_json",
-					url: chrome.extension.getURL( "/config.json" ),
-
-				});
-
-			},
-
 			allow_iframes: function ( url_arr ) {
 
 				chrome.webRequest.onHeadersReceived.addListener( function ( details ) {
@@ -4377,27 +4366,9 @@
 		return _pub;
 
 	};
-	window[ window.webextension_library_name ].modules.exec = function () {
+	window[ window.webextension_library_name ].modules.exec = function ( script_context ) {
 
 		var x = window[ window.webextension_library_name ];
-
-		var types = {
-
-			exec_data: {
-
-				_exec_data_flag: true,
-
-				id: "number",
-
-				parent_id: "number",
-				child_id_arr: "arr of number",
-
-				input: "",
-				output: "",
-
-			},
-
-		};
 
 		var modules = {
 
@@ -4407,8 +4378,12 @@
 
 			app_name: "app_name",
 			call_data_count: 0,
+
 			exec_data_arr: [],
 			log_size: 500,
+
+			stub_arr: [],
+			stub_index: 0,
 
 		};
 
@@ -4433,7 +4408,7 @@
 
 			function store_exec_data ( exec_data ) {
 
-				console.log( "store_exec_data", exec_data );
+				// console.log( "store_exec_data", exec_data );
 
 				var top_level_exec_data = exec_data;
 
@@ -4445,11 +4420,25 @@
 
 				// if ( !top_level_exec_data.do_not_log ) {
 
-					var exec_data_name = "_exec_data_" + _app.name + "_" + _app.id + "_" + top_level_exec_data.id;
+					var exec_data_name = "exec_data_" + _app.name + "_" + _app.id + "_" + top_level_exec_data.id;
 
 					serialize_exec_data( top_level_exec_data );
 
-					localforage.setItem( exec_data_name, top_level_exec_data )
+					if ( script_context === "content" ) {
+
+						chrome.runtime.sendMessage({
+
+							module_name: "controller",
+							method_name: "log_exec_data",
+							arg_arr: [ exec_data_name, top_level_exec_data ],
+
+						});
+
+					} else {
+
+						localforage.setItem( exec_data_name, top_level_exec_data )
+
+					};
 
 					// var storage = {};
 
@@ -4459,130 +4448,6 @@
 					// chrome.storage.local.set( storage );
 
 				// };
-
-			};
-
-			function exec_with_data () {
-
-				var argument_arr = Array.from( arguments );
-
-				_state.call_data_count += 1;
-
-				var parent_exec_data = argument_arr[ 0 ];
-				var module_name = argument_arr[ 1 ];
-				var method_name = argument_arr[ 2 ];
-
-				var exec_data = {
-
-					app_name: _state.app_name,
-					module_name: module_name,
-					method_name: method_name,
-
-					finished: false,
-
-					id: _state.call_data_count,
-					ts: Date.now(),
-
-					parent: parent_exec_data,
-					exec_data_arr: [],
-
-					arguments: argument_arr.slice( 3 ),
-					output: null,
-					found: true,
-
-				};
-
-				if ( module_name === "meta" && method_name === "do_not_log" ) {
-
-					parent_exec_data.do_not_log = true;
-					return;
-
-				} else if ( module_name === "meta" && method_name === "do_log" ) {
-
-					parent_exec_data.do_not_log = false;
-					return;
-
-				};
-
-				if ( parent_exec_data ) {
-
-					parent_exec_data.exec_data_arr.push( exec_data );
-
-				} else {
-
-					_state.exec_data_arr.push( exec_data );
-					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
-
-				};
-
-				var new_arguments = argument_arr.slice( 3 );
-				new_arguments.push( exec_with_data.bind( null, exec_data ) );
-
-				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
-
-					try {
-
-						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
-
-						if ( exec_data.output instanceof Promise ) {
-
-							exec_data.output = new Promise( function ( resolve ) {
-
-								exec_data.output
-								.then( function ( output ) {
-
-									exec_data.output = output;
-									exec_data.finished = true;
-
-									handle_exec_data_finished( exec_data );
-
-									resolve( output );
-
-								})
-								.catch( function ( error ) {
-
-									exec_data.output = null;
-									exec_data.error = true;
-									exec_data.stack = error.stack;
-									exec_data.finished = true;
-
-									handle_exec_data_finished( exec_data );
-
-									resolve( null );
-
-								});
-
-							});
-
-						} else {
-
-							exec_data.finished = true;
-
-							handle_exec_data_finished( exec_data );
-
-						};
-
-					} catch ( error ) {
-
-						exec_data.error = true;
-						exec_data.stack = error.stack;
-						exec_data.output = null;
-						exec_data.finished = true;
-
-						handle_exec_data_finished( exec_data );
-
-					};
-
-				} else {
-
-					exec_data.found = false;
-					exec_data.finished = true;
-
-					handle_exec_data_finished( exec_data );
-
-				};
-
-				return exec_data.output;
 
 			};
 
@@ -4610,6 +4475,30 @@
 
 			};
 
+			function get_do_not_log ( exec_data ) {
+
+				if ( exec_data.do_not_log ) {
+
+					return true;
+
+				} else {
+
+					for ( var i = exec_data.exec_data_arr.length; i--; ) {
+
+						if ( exec_data.exec_data_arr[ i ].do_not_log === true || get_do_not_log( exec_data.exec_data_arr[ i ] ) === true ) {
+
+							return true;
+
+						};
+
+					};
+
+					return false;
+
+				};
+
+			};
+
 			function handle_exec_data_finished ( exec_data ) {
 
 				// find the top-most exec_data
@@ -4628,8 +4517,14 @@
 
 					if ( all_finished ) {
 
-						store_exec_data( top_level_exec_data );
-						_app.log.log_exec_data( top_level_exec_data );
+						var do_not_log = get_do_not_log( top_level_exec_data );
+
+						if ( !do_not_log ) {
+
+							// store_exec_data( top_level_exec_data );
+							_app.log.log_exec_data( top_level_exec_data );
+
+						};
 
 					};
 
@@ -4723,6 +4618,8 @@
 				return exec_data;
 
 			};
+
+		// not used right now 
 
 			function stubbed_exec () {
 
@@ -4862,6 +4759,140 @@
 
 			};
 
+		// main exec functions
+
+			function exec_with_data () {
+
+				var argument_arr = Array.from( arguments );
+
+				_state.call_data_count += 1;
+
+				var parent_exec_data = argument_arr[ 0 ];
+				var module_name = argument_arr[ 1 ];
+				var method_name = argument_arr[ 2 ];
+
+				var exec_data = {
+
+					app_name: _state.app_name,
+					module_name: module_name,
+					method_name: method_name,
+
+					finished: false,
+
+					id: _state.call_data_count,
+					ts: Date.now(),
+
+					parent: parent_exec_data,
+					exec_data_arr: [],
+
+					arguments: argument_arr.slice( 3 ),
+					output: null,
+					found: true,
+
+				};
+
+				if ( module_name === "meta" && method_name === "do_not_log" ) {
+
+					parent_exec_data.do_not_log = true;
+					return;
+
+				} else if ( module_name === "meta" && method_name === "do_log" ) {
+
+					parent_exec_data.do_not_log = false;
+					return;
+
+				};
+
+				if ( parent_exec_data ) {
+
+					parent_exec_data.exec_data_arr.push( exec_data );
+
+				} else {
+
+					_state.exec_data_arr.push( exec_data );
+					_state.exec_data_arr = _state.exec_data_arr.slice( - _state.log_size );
+
+				};
+
+				var new_arguments = argument_arr.slice( 3 );
+				new_arguments.push( exec_with_data.bind( null, exec_data ) );
+
+				if ( _state.stub_arr[ _state.stub_index ] && _state.stub_arr[ _state.stub_index ][ 0 ] === module_name && _state.stub_arr[ _state.stub_index ][ 1 ] === method_name ) {
+
+					exec_data.output = _state.stub_arr[ _state.stub_index ][ 2 ];
+					exec_data.finished = true;
+
+					_state.stub_index += 1;
+					handle_exec_data_finished( exec_data );
+
+				} else if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+
+					try {
+
+						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+
+						if ( exec_data.output instanceof Promise ) {
+
+							exec_data.output = new Promise( function ( resolve ) {
+
+								exec_data.output
+								.then( function ( output ) {
+
+									exec_data.output = output;
+									exec_data.finished = true;
+
+									handle_exec_data_finished( exec_data );
+
+									resolve( output );
+
+								})
+								.catch( function ( error ) {
+
+									exec_data.output = null;
+									exec_data.error = true;
+									exec_data.stack = error.stack;
+									exec_data.finished = true;
+
+									handle_exec_data_finished( exec_data );
+
+									resolve( null );
+
+								});
+
+							});
+
+						} else {
+
+							exec_data.finished = true;
+
+							handle_exec_data_finished( exec_data );
+
+						};
+
+					} catch ( error ) {
+
+						exec_data.error = true;
+						exec_data.stack = error.stack;
+						exec_data.output = null;
+						exec_data.finished = true;
+
+						handle_exec_data_finished( exec_data );
+
+					};
+
+				} else {
+
+					exec_data.found = false;
+					exec_data.finished = true;
+
+					handle_exec_data_finished( exec_data );
+
+				};
+
+				return exec_data.output;
+
+			};
+
 			function exec_no_data () {
 
 				var argument_arr = Array.from( arguments );
@@ -4974,6 +5005,13 @@
 
 			},
 
+			set_stub_arr: function ( stub_arr ) {
+
+				_state.stub_arr = stub_arr;
+				_state.stub_index = 0;
+
+			},
+
 			get_exec_data: function () {
 
 				var argument_arr = Array.from( arguments );
@@ -4996,6 +5034,20 @@
 					_app.log.log_exec_data( d );
 
 				});
+
+			},
+
+			log_stored_exec_data_arr: async function () {
+
+				var keys = await localforage.keys();
+
+				for ( var i = 0; i < keys.length; i++ ) {
+
+					var item = await localforage.getItem( keys[ i ] );
+
+					_app.log.log_exec_data( item );
+
+				};
 
 			},
 

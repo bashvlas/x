@@ -705,17 +705,6 @@
 
 		return {
 
-			load_config: function () {
-
-				return x.ajax({
-
-					method: "get_json",
-					url: chrome.extension.getURL( "/config.json" ),
-
-				});
-
-			},
-
 			allow_iframes: function ( url_arr ) {
 
 				chrome.webRequest.onHeadersReceived.addListener( function ( details ) {
