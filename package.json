@@ -1,0 +1,22 @@
+{
+  "name": "webx",
+  "version": "1.0.0",
+  "description": "A JavaScript library for chrome extension development",
+  "main": "build.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bashvlas/x.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bashvlas/x/issues"
+  },
+  "homepage": "https://github.com/bashvlas/x#readme",
+  "dependencies": {
+    "concat-files": "^0.1.1"
+  }
+}

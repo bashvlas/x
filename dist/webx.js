@@ -5208,7 +5208,9 @@
 							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
+							await x.util.wait( 10 );
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+							await x.util.wait( 10 );
 
 						} else if ( test_data.test_type === "live" ) {
 										
@@ -5230,7 +5232,9 @@
 							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
+							await x.util.wait( 10 );
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+							await x.util.wait( 10 );
 
 						} else {
 
@@ -5240,7 +5244,9 @@
 							var exec_data = get_exec_data.apply( null, input );
 							var equal_bool = _pub.compare( output, exec_data.output );
 
+							await x.util.wait( 10 );
 							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+							await x.util.wait( 10 );
 
 						};
 
