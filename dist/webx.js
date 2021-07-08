@@ -13,6 +13,24 @@
 
 		return {
 
+			update_object: ( object, new_object ) => {
+
+				Object.keys( new_object ).forEach( ( key ) => {
+
+					if ( object[ key ] !== null && typeof object[ key ] === "object" && !Array.isArray( object[ key ] ) ) {
+
+						x.util.update_object( object[ key ], new_object[ key ]);
+
+					} else {
+
+						object[ key ] = new_object[ key ];
+
+					};
+
+				});
+
+			},
+
 			get_unique_id: function () {
 
 				return Date.now() + "_" + Math.random().toString(36).substr(2, 9) + "_" + Math.round( Math.random() * 999999999 );
@@ -2614,165 +2632,13 @@
 
 	};
 
-	window[ window.webextension_library_name ].chrome_p = ( function () {
-
-		function callback_handler ( resolve, response ) {
-
-			if ( chrome.runtime.lastError ) {
-
-				console.log( chrome.runtime.lastError );
-
-				resolve( null );
-
-			} else {
-
-				resolve( response );
-
-			};
-
-		};
-
-		return {
-
-			storage: {
-
-				local: {
-
-					get: ( input ) => {
-
-						return new Promise( ( resolve ) => {
-
-							chrome.storage.local.get( input, resolve );
-
-						});
-
-					},
-
-					set: ( input ) => {
-
-						return new Promise( ( resolve ) => {
-
-							chrome.storage.local.set( input, resolve );
-
-						});
-
-					},
-
-				},
-
-			},
-
-			contextMenus: {
-
-				removeAll: function () {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.contextMenus.removeAll( resolve );
-
-					});
-
-				},
-
-				create: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.contextMenus.create( input, resolve );
-
-					});
-
-				},
-
-			},
-
-			tabs: {
-
-				executeScript: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.executeScript( input_1, input_2, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				sendMessage: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.sendMessage( input_1, input_2, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				get: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.get( input, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				remove: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.remove( input, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				query: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.query( input, resolve );
-
-					});
-
-				},
-
-				create: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.create( input, resolve );
-
-					});
-
-				},
-
-				update: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.update( input_1, input_2, resolve );
-
-					});
-
-				},
-
-			},
-
-		};
-
-	} () );
-
-	window[ window.webextension_library_name ].modules.chrome = function () {
-
-		var _app = null;
+	window[ window.webextension_library_name ].modules.chrome = function ( app ) {
 
 		function callback_handler ( path, resolve, response ) {
 
 			if ( chrome.runtime.lastError ) {
 
-				_app.log.write( "runtime_last_error", path, chrome.runtime.lastError );
+				app.log.write( "runtime_last_error", path, chrome.runtime.lastError );
 
 				resolve( null );
 
@@ -2820,12 +2686,6 @@
 					object.apply( object_context, new_arguments.slice( 1 ) );
 
 				});
-
-			},
-
-			init: function ( app ) {
-
-				_app = app;
 
 			},
 
@@ -3747,7 +3607,7 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.log = function () {
+	window[ window.webextension_library_name ].modules.log = function ( app, mode ) {
 
 		var x = window[ window.webextension_library_name ];
 
@@ -3762,6 +3622,10 @@
 			mute_in_log_event_name_arr: [],
 
 		};
+
+		state.app = app
+		state.mode = mode;
+		state.options = default_options;
 
 		// write log item
 
@@ -3838,18 +3702,18 @@
 
 				if ( exec_data.error ) {
 
-					console.groupCollapsed( title, "color: red" );
+					console.group( title, "color: red" );
 					console.log(exec_data.arguments);
 					console.log(exec_data.stack);
 
 				} else if (!exec_data.found) {
 
-					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.group( title, "color: #F0AD4E" );
 					console.log(exec_data.arguments);
 
 				} else {
 
-					console.groupCollapsed( title, "color: #5D4037" );
+					console.group( title, "color: #5D4037" );
 					console.log(exec_data.arguments);
 					console.log( exec_data.output );
 
@@ -3895,14 +3759,6 @@
 		};
 
 		var _pub = {
-
-			init: function ( app, options ) {
-
-				state.app = app
-				state.mode = app.config.mode;
-				state.options = options || default_options;
-
-			},
 
 			write: function () { // log type = normal
 
@@ -4366,13 +4222,9 @@
 		return _pub;
 
 	};
-	window[ window.webextension_library_name ].modules.exec = function ( script_context ) {
+	window[ window.webextension_library_name ].modules.exec = function ( app, mode, script_context ) {
 
 		var x = window[ window.webextension_library_name ];
-
-		var modules = {
-
-		};
 
 		var _state = {
 
@@ -4387,7 +4239,8 @@
 
 		};
 
-		var _app = null;
+		_app = app;
+		_state.app_name = app.name;
 
 		// util functions
 
@@ -4522,7 +4375,7 @@
 						if ( !do_not_log ) {
 
 							// store_exec_data( top_level_exec_data );
-							_app.log.log_exec_data( top_level_exec_data );
+							app.log.log_exec_data( top_level_exec_data );
 
 						};
 
@@ -4571,11 +4424,29 @@
 
 				};
 
-				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+				// if ( _state.stub_arr[ _state.stub_index ] && _state.stub_arr[ _state.stub_index ][ 0 ] === module_name && _state.stub_arr[ _state.stub_index ][ 1 ] === method_name ) {
+
+				// 	if ( new_arguments[ 0 ] === "_do_not_stub_" ) {
+
+				// 		new_arguments.splice( 0, 1 );
+				// 		_state.stub_index += 1;
+
+				// 	} else {
+
+				// 		exec_data.output = _state.stub_arr[ _state.stub_index ][ 2 ];
+				// 		_state.stub_index += 1;
+
+				// 		return exec_data;
+
+				// 	};
+
+				// };
+
+				if ( app.modules[ module_name ] && app.modules[ module_name ][ method_name ] ) {
 
 					try {
 
-						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+						exec_data.output = app.modules[ module_name ][ method_name ].apply( null, new_arguments )
 
 						if ( exec_data.output instanceof Promise ) {
 
@@ -4711,11 +4582,11 @@
 				var new_arguments = argument_arr.slice( 3 );
 				new_arguments.push( stubbed_exec.bind( null, exec_data ) );
 
-				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+				if ( app.modules[ module_name ] && app.modules[ module_name ][ method_name ] ) {
 
 					try {
 
-						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+						exec_data.output = app.modules[ module_name ][ method_name ].apply( null, new_arguments )
 
 						if ( exec_data.output instanceof Promise ) {
 
@@ -4789,6 +4660,8 @@
 					output: null,
 					found: true,
 
+					stub_mode: "none",
+
 				};
 
 				if ( module_name === "meta" && method_name === "do_not_log" ) {
@@ -4817,19 +4690,33 @@
 				var new_arguments = argument_arr.slice( 3 );
 				new_arguments.push( exec_with_data.bind( null, exec_data ) );
 
-				if ( _state.stub_arr[ _state.stub_index ] && _state.stub_arr[ _state.stub_index ][ 0 ] === module_name && _state.stub_arr[ _state.stub_index ][ 1 ] === method_name ) {
+				if ( _state.stub_arr[ _state.stub_index ] && _state.stub_arr[ _state.stub_index ][ 1 ] === module_name && _state.stub_arr[ _state.stub_index ][ 2 ] === method_name ) {
 
-					exec_data.output = _state.stub_arr[ _state.stub_index ][ 2 ];
-					exec_data.finished = true;
+					exec_data.stub_mode = _state.stub_arr[ _state.stub_index ][ 0 ];
 
-					_state.stub_index += 1;
-					handle_exec_data_finished( exec_data );
+					if ( _state.stub_arr[ _state.stub_index ][ 0 ] === "do_not_stub" ) {
 
-				} else if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+						_state.stub_index += 1;
+
+					} else {
+
+						exec_data.output = _state.stub_arr[ _state.stub_index ][ 3 ];
+						exec_data.finished = true;
+
+						_state.stub_index += 1;
+						handle_exec_data_finished( exec_data );
+
+						return exec_data.output;
+
+					};
+
+				};
+
+				if ( app.modules[ module_name ] && app.modules[ module_name ][ method_name ] ) {
 
 					try {
 
-						exec_data.output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+						exec_data.output = app.modules[ module_name ][ method_name ].apply( null, new_arguments )
 
 						if ( exec_data.output instanceof Promise ) {
 
@@ -4903,11 +4790,11 @@
 				var new_arguments = argument_arr.slice( 2 );
 				new_arguments.push( exec_no_data );
 
-				if ( modules[ module_name ] && modules[ module_name ][ method_name ] ) {
+				if ( app.modules[ module_name ] && app.modules[ module_name ][ method_name ] ) {
 
 					try {
 
-						var output = modules[ module_name ][ method_name ].apply( null, new_arguments )
+						var output = app.modules[ module_name ][ method_name ].apply( null, new_arguments )
 
 						if ( output instanceof Promise ) {
 
@@ -4951,7 +4838,7 @@
 
 			exec: function () {
 
-				if ( _app.config.mode === "dev" ) {
+				if ( mode === "dev" ) {
 
 					var argument_arr = Array.from( arguments );
 					argument_arr.unshift( null );
@@ -4972,23 +4859,9 @@
 
 		var pub = {
 
-			init: ( app ) => {
-
-				_app = app;
-
-				_state.app_name = app.name;
-
-				if ( app.config && app.config.log_size ) {
-
-					_state.log_size = app.config.log_size;
-
-				};
-
-			},
-
 			exec: function () {
 
-				if ( _app.config.mode === "dev" ) {
+				if ( mode === "dev" ) {
 
 					var argument_arr = Array.from( arguments );
 					argument_arr.unshift( null );
@@ -5031,7 +4904,7 @@
 
 				_state.exec_data_arr.forEach( ( d ) => {
 
-					_app.log.log_exec_data( d );
+					app.log.log_exec_data( d );
 
 				});
 
@@ -5045,7 +4918,7 @@
 
 					var item = await localforage.getItem( keys[ i ] );
 
-					_app.log.log_exec_data( item );
+					app.log.log_exec_data( item );
 
 				};
 
@@ -5076,7 +4949,7 @@
 
 					total_exec_data_arr.forEach( ( exec_data ) => {
 
-						_app.log.log_exec_data( exec_data );
+						app.log.log_exec_data( exec_data );
 
 					});
 
@@ -5111,7 +4984,7 @@
 
 			add_module: ( module_name, module ) => {
 
-				modules[ module_name ] = module;
+				app.modules[ module_name ] = module;
 
 			},
 
@@ -5121,16 +4994,73 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.exec_tester = function () {
+	window[ window.webextension_library_name ].modules.exec_tester = function ( app ) {
 
 		var x = window[ window.webextension_library_name ];
-		var _app = null;
+		var _app = app;
 
 		var _pub = {
 
 			init: function ( app ) {
 
-				_app = app;
+			},
+
+			clone: function ( obj ) {
+
+				return JSON.parse( JSON.stringify( obj ) );
+
+			},
+
+			exec_data_to_log: function ( exec_data ) {
+
+				return exec_data.exec_data_arr.map( ( data ) => {
+
+					var log = [];
+
+					log[ 0 ] = data.stub_mode;
+
+					log[ 1 ] = ([]).concat( data.arguments );
+					log[ 1 ].unshift( data.method_name );
+					log[ 1 ].unshift( data.module_name );
+
+					if ( data.stub_mode === "stub" ) {
+
+						log[ 2 ] = data.output;
+
+					} else if ( data.stub_mode === "do_not_stub" ) {
+
+						log[ 2 ] = null;
+
+					};
+
+					return log;
+
+				});
+
+			},
+
+			log_to_exec_data: function ( log ) {
+
+				var exec_data = {};
+
+				exec_data.found = true;
+
+				exec_data.exec_data_arr = log.map( ( log_item ) => {
+
+					var item = {};
+
+					item.module_name = log_item[ 1 ][ 0 ];
+					item.method_name = log_item[ 1 ][ 1 ];
+					item.arguments = log_item[ 1 ].slice( 2 );
+					item.exec_data_arr = [];
+					item.output = log_item[ 2 ];
+					item.found = true;
+
+					return item;
+
+				});
+
+				return exec_data;
 
 			},
 
@@ -5173,7 +5103,7 @@
 
 			},
 
-			test_module: async function ( get_exec_data, module_name, json5_url ) {
+			test_module: async function ( exec, get_exec_data, module_name, json5_url ) {
 
 				var result = await fetch( json5_url );
 				var text = await result.text();
@@ -5185,6 +5115,8 @@
 
 					var method_name = method_name_arr[ i ];
 					var test_data_arr = test_info[ method_name ];
+
+					exec.set_stub_arr([]);
 
 					for ( var j = 0; j < test_data_arr.length; j++ ) {
 
@@ -5200,55 +5132,74 @@
 						var input = io[ 0 ];
 						var output = io[ 1 ];
 
-						if ( test_data.test_type === "log_test" ) {
+						var input_clone = _pub.clone( input );
 
-							input.unshift( method_name );
-							input.unshift( module_name );
+						if ( test_data.log ) {
 
-							var exec_data = get_exec_data.apply( null, input );
-							var equal_bool = _pub.compare( output, exec_data.output );
+							var stub_arr = test_data.log.map( ( item ) => {
 
-							await x.util.wait( 10 );
-							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
-							await x.util.wait( 10 );
-
-						} else if ( test_data.test_type === "live" ) {
-										
-							var webpage_data = {};
-
-							webpage_data.url = input.url;
-							webpage_data.response_body = await _app.x.ajax({
-
-								method: "get_text",
-								url: webpage_data.url,
+								return [ item[ 0 ], item[ 1 ][ 0 ], item[ 1 ][ 1 ], item[ 2 ] ]
 
 							});
 
-							input = [ webpage_data ];
+						} else {
 
-							input.unshift( method_name );
-							input.unshift( module_name );
+							var stub_arr = [];
 
-							var exec_data = get_exec_data.apply( null, input );
-							var equal_bool = _pub.compare( output, exec_data.output );
+						};
 
-							await x.util.wait( 10 );
-							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
-							await x.util.wait( 10 );
+						exec.set_stub_arr( stub_arr );
+
+						input_clone.unshift( method_name );
+						input_clone.unshift( module_name );
+
+						var exec_data = get_exec_data.apply( null, input_clone );
+						test_data.actual_log = _pub.exec_data_to_log( exec_data );
+
+						input_clone = input_clone.slice( 2 );
+
+						if ( test_data.log ) {
+
+							test_data.expected_exec_data = _pub.log_to_exec_data( test_data.log );
+							test_data.expected_exec_data.arguments = input;
+							test_data.expected_exec_data.app_name = "tests";
+							test_data.expected_exec_data.module_name = module_name;
+							test_data.expected_exec_data.method_name = method_name;
+
+							test_data.log_check_result = _pub.compare( test_data.log, test_data.actual_log );
 
 						} else {
 
-							input.unshift( method_name );
-							input.unshift( module_name );
-
-							var exec_data = get_exec_data.apply( null, input );
-							var equal_bool = _pub.compare( output, exec_data.output );
-
-							await x.util.wait( 10 );
-							_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
-							await x.util.wait( 10 );
+							test_data.log_check_result = true;
 
 						};
+
+						if ( test_data.updated_input ) {
+
+							test_data.updated_input_check_result = _pub.compare( test_data.updated_input, input_clone );
+							test_data.actual_updated_input = input_clone;
+
+						} else {
+
+							test_data.updated_input_check_result = true;
+
+						};
+
+						if ( test_data.hasOwnProperty( "output" ) ) {
+
+							test_data.output_check_result = _pub.compare( output, exec_data.output );
+
+						} else {
+
+							test_data.output_check_result = true;
+
+						};
+
+						var equal_bool = test_data.log_check_result && test_data.updated_input_check_result && test_data.output_check_result;
+
+						// await x.util.wait( 10 );
+						_pub.log_test_case( test_data, exec_data, input, output, equal_bool );
+						// await x.util.wait( 10 );
 
 					};
 
@@ -5429,27 +5380,99 @@
 					console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
 
 					console.log( "input" );
-					console.log( input.slice( 2 ) );
-					console.log( "expected output" );
-					console.log( output );
-					console.log( "actual output" );
-					console.log( exec_data.output );
+					console.log( input );
+
+					if ( test_data.hasOwnProperty( "output" ) ) {
+
+						console.log( "expected output" );
+						console.log( output );
+						console.log( "actual output" );
+						console.log( exec_data.output );
+
+					};
+
+					if ( test_data.updated_input ) {
+
+						console.log( "expected updated input" );
+						console.log( test_data.updated_input );
+						console.log( "actual updated input" );
+						console.log( test_data.actual_updated_input );
+
+					};
+
+					if ( test_data.log ) {
+
+						console.log( "expected log" );
+						_app.log.log_exec_data( test_data.expected_exec_data );
+
+						console.log( "actual log" );
+						_app.log.log_exec_data( exec_data );
+
+					} else {
+
+						_app.log.log_exec_data( exec_data );
+
+					};
 
 					console.groupCollapsed( `%c new_test_data`, "color: grey" );
 
-					var new_test_data = JSON.parse( JSON.stringify( test_data ) );
-					new_test_data.output = exec_data.output;
-					new_test_data.input = new_test_data.input.slice( 2 );
+					var new_test_data = {};
+
+					new_test_data.input = test_data.input;
+
+					if ( test_data.hasOwnProperty( "output" ) ) {
+
+						new_test_data.output = exec_data.output;
+
+					};
+
+					if ( test_data.updated_input ) {
+
+						new_test_data.updated_input = test_data.actual_updated_input;
+
+					};
+
+					if ( test_data.log ) {
+
+						new_test_data.log = test_data.actual_log;
+
+					};
 
 					console.log( JSON.stringify( new_test_data, null, "\t" ) );
 
 					console.groupEnd();
 
-					_app.log.log_exec_data( exec_data );
-
 					console.groupEnd();
 
 				};
+
+				//  else {
+
+				// 	var style = equal_bool ? "color:green" : "color:red";
+				// 	console.groupCollapsed( `%c ${ exec_data.module_name }.${ exec_data.method_name }`, style );
+
+				// 	console.log( "input" );
+				// 	console.log( input.slice( 2 ) );
+				// 	console.log( "expected output" );
+				// 	console.log( output );
+				// 	console.log( "actual output" );
+				// 	console.log( exec_data.output );
+
+				// 	console.groupCollapsed( `%c new_test_data`, "color: grey" );
+
+				// 	var new_test_data = JSON.parse( JSON.stringify( test_data ) );
+				// 	new_test_data.output = exec_data.output;
+				// 	new_test_data.input = new_test_data.input.slice( 2 );
+
+				// 	console.log( JSON.stringify( new_test_data, null, "\t" ) );
+
+				// 	console.groupEnd();
+
+				// 	_app.log.log_exec_data( exec_data );
+
+				// 	console.groupEnd();
+
+				// };
 
 			},
 

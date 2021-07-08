@@ -6,6 +6,24 @@
 
 		return {
 
+			update_object: ( object, new_object ) => {
+
+				Object.keys( new_object ).forEach( ( key ) => {
+
+					if ( object[ key ] !== null && typeof object[ key ] === "object" && !Array.isArray( object[ key ] ) ) {
+
+						x.util.update_object( object[ key ], new_object[ key ]);
+
+					} else {
+
+						object[ key ] = new_object[ key ];
+
+					};
+
+				});
+
+			},
+
 			get_unique_id: function () {
 
 				return Date.now() + "_" + Math.random().toString(36).substr(2, 9) + "_" + Math.round( Math.random() * 999999999 );

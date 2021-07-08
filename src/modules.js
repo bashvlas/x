@@ -1,163 +1,11 @@
 
-	window[ window.webextension_library_name ].chrome_p = ( function () {
-
-		function callback_handler ( resolve, response ) {
-
-			if ( chrome.runtime.lastError ) {
-
-				console.log( chrome.runtime.lastError );
-
-				resolve( null );
-
-			} else {
-
-				resolve( response );
-
-			};
-
-		};
-
-		return {
-
-			storage: {
-
-				local: {
-
-					get: ( input ) => {
-
-						return new Promise( ( resolve ) => {
-
-							chrome.storage.local.get( input, resolve );
-
-						});
-
-					},
-
-					set: ( input ) => {
-
-						return new Promise( ( resolve ) => {
-
-							chrome.storage.local.set( input, resolve );
-
-						});
-
-					},
-
-				},
-
-			},
-
-			contextMenus: {
-
-				removeAll: function () {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.contextMenus.removeAll( resolve );
-
-					});
-
-				},
-
-				create: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.contextMenus.create( input, resolve );
-
-					});
-
-				},
-
-			},
-
-			tabs: {
-
-				executeScript: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.executeScript( input_1, input_2, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				sendMessage: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.sendMessage( input_1, input_2, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				get: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.get( input, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				remove: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.remove( input, callback_handler.bind( null, resolve ) );
-
-					});
-
-				},
-
-				query: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.query( input, resolve );
-
-					});
-
-				},
-
-				create: function ( input ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.create( input, resolve );
-
-					});
-
-				},
-
-				update: function ( input_1, input_2 ) {
-
-					return new Promise( ( resolve ) => {
-
-						chrome.tabs.update( input_1, input_2, resolve );
-
-					});
-
-				},
-
-			},
-
-		};
-
-	} () );
-
-	window[ window.webextension_library_name ].modules.chrome = function () {
-
-		var _app = null;
+	window[ window.webextension_library_name ].modules.chrome = function ( app ) {
 
 		function callback_handler ( path, resolve, response ) {
 
 			if ( chrome.runtime.lastError ) {
 
-				_app.log.write( "runtime_last_error", path, chrome.runtime.lastError );
+				app.log.write( "runtime_last_error", path, chrome.runtime.lastError );
 
 				resolve( null );
 
@@ -205,12 +53,6 @@
 					object.apply( object_context, new_arguments.slice( 1 ) );
 
 				});
-
-			},
-
-			init: function ( app ) {
-
-				_app = app;
 
 			},
 
@@ -1132,7 +974,7 @@
 
 	};
 
-	window[ window.webextension_library_name ].modules.log = function () {
+	window[ window.webextension_library_name ].modules.log = function ( app, mode ) {
 
 		var x = window[ window.webextension_library_name ];
 
@@ -1147,6 +989,10 @@
 			mute_in_log_event_name_arr: [],
 
 		};
+
+		state.app = app
+		state.mode = mode;
+		state.options = default_options;
 
 		// write log item
 
@@ -1223,18 +1069,18 @@
 
 				if ( exec_data.error ) {
 
-					console.groupCollapsed( title, "color: red" );
+					console.group( title, "color: red" );
 					console.log(exec_data.arguments);
 					console.log(exec_data.stack);
 
 				} else if (!exec_data.found) {
 
-					console.groupCollapsed( title, "color: #F0AD4E" );
+					console.group( title, "color: #F0AD4E" );
 					console.log(exec_data.arguments);
 
 				} else {
 
-					console.groupCollapsed( title, "color: #5D4037" );
+					console.group( title, "color: #5D4037" );
 					console.log(exec_data.arguments);
 					console.log( exec_data.output );
 
@@ -1280,14 +1126,6 @@
 		};
 
 		var _pub = {
-
-			init: function ( app, options ) {
-
-				state.app = app
-				state.mode = app.config.mode;
-				state.options = options || default_options;
-
-			},
 
 			write: function () { // log type = normal
 
