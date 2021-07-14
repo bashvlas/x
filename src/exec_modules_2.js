@@ -245,9 +245,7 @@
 
 			},
 
-			test_module: async function ( exec_with_data, module_name, json_url ) {
-
-				var test_info = await x.ajax({ method: "get_json", url: json_url });
+			test_module: async function ( exec_with_data, module_name, test_info ) {
 
 				var method_name_arr = Object.keys( test_info );
 

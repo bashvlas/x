@@ -18,7 +18,7 @@
 		"src/modules.js",
 		"src/exec_modules.js",
 
-	], 'dist/webx.js', function ( err ) {
+	], 'dist/chromane.js', function ( err ) {
 
 		if ( err ) {
 
