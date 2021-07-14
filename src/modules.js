@@ -1200,6 +1200,21 @@
 
 			},
 
+			force_log_exec_data: function ( exec_data ) { // log type = exec_data
+
+				var log_item = {
+
+					type: "exec_data",
+					app_name: exec_data.app_name,
+
+					exec_data,
+
+				};
+
+				write_log_item( log_item )
+
+			},
+
 			log_event: function ( source, listener, name, data ) { // log type = event
 
 				var log_item = {
